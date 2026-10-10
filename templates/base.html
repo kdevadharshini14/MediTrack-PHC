@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}MediTrack PHC{% endblock %} - Medicine Stock & Redistribution System</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- TOP NAVIGATION BAR -->
+  <nav class="navbar">
+    <a href="/" class="brand-container">
+      <div class="brand-icon">⚕</div>
+      <div>
+        <span class="brand-title" data-i18n="brand_title">MediTrack PHC</span>
+        <span class="brand-subtitle" data-i18n="brand_sub">Medicine Stock & Lateral Redistribution</span>
+      </div>
+    </a>
+
+    <ul class="nav-links">
+      <li class="nav-item">
+        <a href="/" class="{% if request.path == '/' %}active{% endif %}" data-i18n="nav_dashboard">
+          📊 Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/stock" class="{% if request.path == '/stock' %}active{% endif %}" data-i18n="nav_stock">
+          📦 My Stock
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/usage" class="{% if request.path == '/usage' %}active{% endif %}" data-i18n="nav_usage">
+          ✍ Daily Dispensing
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/requests" class="{% if request.path == '/requests' %}active{% endif %}" data-i18n="nav_requests">
+          🔄 Peer Transfers
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/alerts" class="{% if request.path == '/alerts' %}active{% endif %}" data-i18n="nav_alerts">
+          🚨 Shortage Alerts
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/analytics" class="{% if request.path == '/analytics' %}active{% endif %}" data-i18n="nav_analytics">
+          📈 Analytics & Forecast
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="/activity" class="{% if request.path == '/activity' %}active{% endif %}" data-i18n="nav_activity">
+          📋 Audit Log
+        </a>
+      </li>
+    </ul>
+
+    <div class="nav-actions">
+      <!-- Notification Bell -->
+      <a href="/alerts" class="alert-bell-link" title="Active Alerts for this PHC">
+        🔔
+        <span class="alert-badge-count" id="alertBellBadge">0</span>
+      </a>
+
+      <!-- Tamil / English Language Switcher -->
+      <button class="lang-btn" id="langToggleBtn">தமிழ்</button>
+
+      <!-- Active Logged-in Hospital Profile Pill -->
+      {% if current_phc %}
+      <div style="display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.12); padding:0.35rem 0.75rem; border-radius:var(--radius-sm); border:1px solid rgba(255,255,255,0.2);">
+        <span style="font-size:0.85rem; font-weight:700; color:#a7f3d0;">
+          🏥 {{ current_phc.name }}
+        </span>
+        <a href="/logout" title="Sign out or switch hospital" style="color:rgba(255,255,255,0.7); text-decoration:none; font-size:0.8rem; margin-left:4px; padding:2px 6px; background:rgba(239,68,68,0.3); border-radius:4px;">
+          Logout
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- MAIN BODY CONTAINER -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div>
+      <strong>MediTrack PHC</strong> • {{ current_phc.name if current_phc else "Primary Health Centre Network" }} • Namakkal District, Tamil Nadu
+    </div>
+    <div>
+      Peer-to-peer redistribution active within 25 km radius.
+    </div>
+  </footer>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- SCRIPTS -->
+  <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

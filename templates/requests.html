@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Peer Transfers - {{ current_phc.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      🔄 Peer Transfers &amp; Indent — {{ current_phc.name }}
+    </h1>
+    <p class="page-desc">
+      Manage lateral stock transfers: approve requests from neighbouring PHCs and track outgoing requests sent to donors.
+    </p>
+  </div>
+  <div class="header-actions">
+    <a href="/api/export/indent" class="btn btn-primary" download>
+      ⬇ Download My District Indent CSV
+    </a>
+  </div>
+</div>
+
+<!-- SECTION 1: INCOMING REQUESTS (ACTION REQUIRED) -->
+<div class="card mb-4" style="border-left: 5px solid var(--primary);">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">
+        📥 Incoming Requests from Other PHCs (You are the Donor)
+      </h2>
+      <p class="card-desc">
+        Other health centres in shortage have requested stock from your surplus inventory.
+      </p>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Medicine</th>
+            <th>Requester Centre</th>
+            <th>Quantity Requested</th>
+            <th>Status</th>
+            <th>Requested Date</th>
+            <th>Your Action</th>
+          </tr>
+        </thead>
+        <tbody id="incomingRequestsBody">
+          <tr>
+            <td colspan="7" class="text-center p-4 text-muted">Loading incoming requests...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: OUTGOING REQUESTS (SENT BY THIS HOSPITAL) -->
+<div class="card mb-4">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">
+        📤 Outgoing Requests Sent to Donor PHCs (You are the Requester)
+      </h2>
+      <p class="card-desc">
+        Requests you have sent to neighbouring centres for emergency lateral stock supply.
+      </p>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Medicine</th>
+            <th>Donor Centre</th>
+            <th>Quantity Requested</th>
+            <th>Status</th>
+            <th>Requested Date</th>
+          </tr>
+        </thead>
+        <tbody id="outgoingRequestsBody">
+          <tr>
+            <td colspan="6" class="text-center p-4 text-muted">Loading outgoing requests...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3: DISTRICT INDENT TABLE FOR THIS HOSPITAL -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">📄 Auto-Generated District Indent for {{ current_phc.name }}</h2>
+      <p class="card-desc">
+        Residual 30-day requirement after accounting for what neighbouring surplus PHCs can supply laterally.
+      </p>
+    </div>
+    <div>
+      <a href="/api/export/indent" class="btn btn-outline btn-sm" download>
+        ⬇ Export CSV
+      </a>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Medicine</th>
+            <th>Current Stock</th>
+            <th>Burn Velocity</th>
+            <th>30-Day Need</th>
+            <th>Peer Donors Cover</th>
+            <th>Net District Indent</th>
+            <th>Suggested Peer Donor</th>
+          </tr>
+        </thead>
+        <tbody id="indentTableBody">
+          <tr>
+            <td colspan="7" class="text-center p-4 text-muted">Loading district indent...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/requests.js') }}"></script>
+{% endblock %}

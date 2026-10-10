@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Shortage Alerts - {{ current_phc.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      🚨 {{ current_phc.name }} — Shortage &amp; Velocity Alerts
+    </h1>
+    <p class="page-desc">
+      Medicines currently at risk of stockout based on dispensing speed and minimum buffer levels. Includes lateral donor recommendations.
+    </p>
+  </div>
+  <div class="header-actions">
+    <a href="/requests" class="btn btn-outline">
+      Track Transfer Requests →
+    </a>
+  </div>
+</div>
+
+<!-- ALERT CONTROLS BAR -->
+<div class="card mb-4 p-3">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+    <div style="display:inline-flex; border:1px solid var(--slate-300); border-radius:var(--radius-sm); overflow:hidden;">
+      <button class="btn btn-primary btn-sm" id="btnActiveAlerts">Active Alerts</button>
+      <button class="btn btn-outline btn-sm" id="btnResolvedAlerts">Resolved Alerts</button>
+    </div>
+
+    <div>
+      <span class="badge badge-outline" style="font-size:0.85rem;">
+        🏥 Filtered to: <strong>{{ current_phc.name }}</strong>
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTS LIST CONTAINER -->
+<div class="alerts-list" id="alertsListContainer">
+  <div class="p-4 text-center text-muted">Loading your centre's alerts and searching nearby donors...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/alerts.js') }}"></script>
+{% endblock %}

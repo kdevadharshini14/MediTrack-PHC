@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - {{ current_phc.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      🏥 {{ current_phc.name }}
+    </h1>
+    <p class="page-desc">
+      {{ current_phc.location }} • Dedicated Pharmacy &amp; Inventory Management Workspace
+    </p>
+  </div>
+  <div class="header-actions">
+    <a href="/usage" class="btn btn-primary">
+      ✍ Record Dispensing
+    </a>
+    <a href="/requests" class="btn btn-outline">
+      🔄 View Transfers
+    </a>
+  </div>
+</div>
+
+<!-- CRITICAL ALERT BANNER FOR THIS PHC -->
+<div class="critical-banner" id="criticalAlertBanner" style="display: none;">
+  <div class="critical-banner-content">
+    <div class="critical-icon">!</div>
+    <div class="critical-banner-text">
+      <strong>LOCAL CRITICAL SHORTAGE DETECTED</strong>
+      <p id="criticalBannerMessage">Stock is depleting rapidly at your health centre.</p>
+    </div>
+  </div>
+  <div>
+    <a href="/alerts" class="btn btn-danger btn-sm">
+      Find Donors &amp; Request Stock →
+    </a>
+  </div>
+</div>
+
+<!-- METRIC CARDS GRID FOR THIS HOSPITAL -->
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="metric-icon-box metric-blue">💊</div>
+    <div class="metric-info">
+      <h3 id="countMedicines">12</h3>
+      <p>My Tracked Medicines</p>
+    </div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-icon-box metric-red">🚨</div>
+    <div class="metric-info">
+      <h3 id="countCritical">0</h3>
+      <p>Critical Shortages</p>
+    </div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-icon-box metric-amber">⚠️</div>
+    <div class="metric-info">
+      <h3 id="countWarning">0</h3>
+      <p>Warning Buffers</p>
+    </div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-icon-box metric-teal">📥</div>
+    <div class="metric-info">
+      <h3 id="countIncomingReqs">0</h3>
+      <p>Incoming Requests</p>
+    </div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-icon-box metric-emerald">📤</div>
+    <div class="metric-info">
+      <h3 id="countOutgoingReqs">0</h3>
+      <p>Outgoing Requests</p>
+    </div>
+  </div>
+</div>
+
+<!-- FEATURE: SEARCH MEDICINE ACROSS OTHER HOSPITALS -->
+<div class="card mb-4" style="border-top: 4px solid var(--primary);">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">
+        🔍 Search Medicine Across Block &amp; Find Surplus Donors
+      </h2>
+      <p class="card-desc">
+        Need a medicine? Select it here to instantly scan neighbouring centres within 25 km that hold extra surplus stock.
+      </p>
+    </div>
+  </div>
+  <div class="card-body">
+    <div style="display:flex; gap:1rem; align-items:center; flex-wrap:wrap; margin-bottom:1.25rem;">
+      <div style="flex:1; min-width:260px;">
+        <select class="form-select" id="surplusSearchSelect">
+          <option value="" disabled selected>Select medicine you need to request...</option>
+        </select>
+      </div>
+      <div>
+        <button class="btn btn-primary" id="btnSearchSurplus">
+          🔍 Find Extra Stock in Nearby PHCs
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Results Box -->
+    <div id="surplusResultsContainer" style="display:none;">
+      <div class="p-3 mb-2" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--radius-md);">
+        <strong style="color:var(--success-dark);" id="surplusResultHeader">Surplus Availability:</strong>
+      </div>
+      <div id="surplusDonorsList" class="rebalance-pairs-list">
+        <!-- Injected via dashboard.js -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- URGENT INCOMING TRANSFER REQUESTS FOR THIS HOSPITAL TO APPROVE -->
+<div class="card mb-4" id="incomingRequestsSection" style="display:none;">
+  <div class="card-header" style="background:#fef2f2;">
+    <div>
+      <h2 class="card-title" style="color:var(--danger-dark);">
+        📥 Pending Requests from Other PHCs (Action Required)
+      </h2>
+      <p class="card-desc">
+        Neighbouring hospitals have requested stock from your surplus inventory.
+      </p>
+    </div>
+    <a href="/requests" class="btn btn-outline btn-sm">Manage All</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Priority</th>
+            <th>Medicine</th>
+            <th>Requester Centre</th>
+            <th>Quantity Requested</th>
+            <th>Requested Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="incomingRequestsTableBody">
+          <!-- Injected via dashboard.js -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MY PHC'S STOCK HEALTH SNAPSHOT -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">
+        📦 {{ current_phc.name }} — Inventory Health Overview
+      </h2>
+      <p class="card-desc">
+        Velocity and days of supply remaining for medicines at your centre.
+      </p>
+    </div>
+    <div>
+      <a href="/stock" class="btn btn-outline btn-sm">Full Stock Register →</a>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Medicine</th>
+            <th>Category</th>
+            <th>My Current Stock</th>
+            <th>Min Level</th>
+            <th>Burn Velocity</th>
+            <th>Days Supply Left</th>
+            <th>Trend</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="myStockSnapshotBody">
+          <tr>
+            <td colspan="8" class="text-center p-4 text-muted">Loading your centre's stock...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Dispensing - {{ current_phc.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      ✍ Daily Outpatient Dispensing — {{ current_phc.name }}
+    </h1>
+    <p class="page-desc">
+      Record outpatient dispensing for today. Stock will deduct atomically, burn rate will update, and shortage alerts will evaluate automatically.
+    </p>
+  </div>
+  <div class="header-actions">
+    <a href="/api/export/usage" class="btn btn-outline" download>
+      ⬇ Export My Usage Log CSV
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Dispensing Session</h2>
+  </div>
+  <div class="card-body">
+    <form id="usageForm">
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.25rem; margin-bottom: 1.5rem;">
+        <div class="form-group mb-0">
+          <label class="form-label">Dispensing Health Centre</label>
+          <div class="form-control" style="background:#f8fafc; font-weight:700; color:var(--primary-dark);">
+            🏥 {{ current_phc.name }} ({{ current_phc.location }})
+          </div>
+        </div>
+
+        <div class="form-group mb-0">
+          <label class="form-label">Dispensing Date</label>
+          <input type="date" class="form-control" id="usageDate" required>
+        </div>
+      </div>
+
+      <!-- MEDICINES DISPENSED LIST -->
+      <div class="mb-4">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+          <h3 style="font-size:1rem; font-weight:700; color:var(--slate-800);">
+            Medicines Dispensed in this Session
+          </h3>
+          <button type="button" class="btn btn-secondary btn-sm" id="addRowBtn">
+            ➕ Add Another Medicine
+          </button>
+        </div>
+
+        <div id="usageItemsContainer">
+          <!-- Injected via usage.js -->
+        </div>
+      </div>
+
+      <div id="formActionsRow" style="display:flex; justify-content: flex-end; gap:0.75rem; border-top:1px solid var(--slate-200); padding-top:1.25rem;">
+        <button type="button" class="btn btn-secondary" onclick="window.location.reload()">
+          Reset Form
+        </button>
+        <button type="submit" class="btn btn-primary" data-i18n="btn_save">
+          💾 Save Dispensing &amp; Deduct Stock
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/usage.js') }}"></script>
+{% endblock %}

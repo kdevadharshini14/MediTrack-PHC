@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}My Stock Inventory - {{ current_phc.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      📦 {{ current_phc.name }} — Medicine Inventory
+    </h1>
+    <p class="page-desc">
+      Inspect your centre's current medicine quantities, daily burn velocities, and remaining days of supply.
+    </p>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-primary" onclick="openModal('addStockModal')">
+      ➕ Add Existing Medicine
+    </button>
+    <button class="btn btn-success" onclick="openModal('createMedicineModal')">
+      ✨ Register Brand New Medicine
+    </button>
+    <a href="/api/export/stock" class="btn btn-outline" download>
+      ⬇ Export My Stock CSV
+    </a>
+  </div>
+</div>
+
+<!-- SEARCH BAR FOR THIS HOSPITAL -->
+<div class="card mb-3 p-3">
+  <div>
+    <label class="form-label">Search Medicine or Therapeutic Category</label>
+    <input type="text" class="form-control" id="stockSearch" placeholder="Type medicine name or category (e.g. Paracetamol, Metformin, Pediatric, Antibiotic)...">
+  </div>
+</div>
+
+<!-- STOCK DATA TABLE -->
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Medicine Name</th>
+            <th>Category</th>
+            <th>Current Stock</th>
+            <th>Min Safe Level</th>
+            <th>7-Day Burn Rate</th>
+            <th>Days Supply Left</th>
+            <th>Burn Trend</th>
+            <th>Expiry Details</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="stockTableBody">
+          <tr>
+            <td colspan="9" class="text-center p-4 text-muted">Loading your centre's inventory records...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 1: UPDATE EXISTING STOCK QUANTITY -->
+<div class="modal-backdrop" id="updateStockModal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title" id="updateTitle">Update Stock Quantity</h3>
+      <button class="modal-close" onclick="closeModal('updateStockModal')">&times;</button>
+    </div>
+    <form id="updateStockForm">
+      <div class="modal-body">
+        <input type="hidden" id="updateStockId">
+        <input type="hidden" id="updateMedId">
+
+        <div class="form-group">
+          <label class="form-label">Physical Stock Quantity</label>
+          <input type="number" class="form-control" id="updateQuantity" min="0" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Minimum Safety Threshold (Buffer)</label>
+          <input type="number" class="form-control" id="updateMinLevel" min="1" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Batch Expiry Date</label>
+          <input type="date" class="form-control" id="updateExpiry">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('updateStockModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 2: ADD EXISTING MEDICINE FROM CATALOG -->
+<div class="modal-backdrop" id="addStockModal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title">Add Medicine to {{ current_phc.name }}</h3>
+      <button class="modal-close" onclick="closeModal('addStockModal')">&times;</button>
+    </div>
+    <form id="addStockForm">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Select Medicine from Master Catalog</label>
+          <select class="form-select" id="addModalMedicine" required>
+            <!-- Injected via stock.js -->
+          </select>
+          <div style="font-size:0.8rem; margin-top:6px; color:var(--slate-500);">
+            Don't see your medicine? 
+            <a href="javascript:void(0)" onclick="closeModal('addStockModal'); openModal('createMedicineModal');" style="color:var(--primary); font-weight:700;">
+              ✨ Register a Brand New Medicine here
+            </a>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Initial Quantity in Stock</label>
+          <input type="number" class="form-control" id="addQuantity" min="0" value="100" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Minimum Safe Threshold (Buffer)</label>
+          <input type="number" class="form-control" id="addMinLevel" min="1" value="30" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Expiry Date</label>
+          <input type="date" class="form-control" id="addExpiry">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addStockModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add to Inventory</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL 3: REGISTER BRAND NEW MEDICINE INTO SYSTEM -->
+<div class="modal-backdrop" id="createMedicineModal">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title">✨ Register Brand New Medicine</h3>
+      <button class="modal-close" onclick="closeModal('createMedicineModal')">&times;</button>
+    </div>
+    <form id="createMedicineForm">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Medicine Generic / Brand Name</label>
+          <input type="text" class="form-control" id="newMedName" placeholder="e.g. Doxycycline 100mg, Rabies Vaccine, Cough Syrup" required>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">Unit of Packaging</label>
+            <input type="text" class="form-control" id="newMedUnit" placeholder="e.g. 100ml Bottle, Strip, Vial, Ampoule, Tablet" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Therapeutic Category</label>
+            <input type="text" class="form-control" id="newMedCategory" placeholder="e.g. Antibiotic, Vaccine, Pediatric, Emergency" required>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">Initial Quantity</label>
+            <input type="number" class="form-control" id="newMedQuantity" min="0" value="120" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Min Safe Threshold</label>
+            <input type="number" class="form-control" id="newMedMinLevel" min="1" value="40" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Batch Expiry Date</label>
+          <input type="date" class="form-control" id="newMedExpiry">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('createMedicineModal')">Cancel</button>
+        <button type="submit" class="btn btn-success">✓ Register &amp; Add to Inventory</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/stock.js') }}"></script>
+{% endblock %}

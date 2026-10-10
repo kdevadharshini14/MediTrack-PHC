@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Log{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title" data-i18n="nav_activity">System Activity & Audit Log</h1>
+    <p class="page-desc">
+      Immutable audit trail recording every inventory update, dispensing session, alert trigger, and lateral stock transfer.
+    </p>
+  </div>
+  <div class="header-actions">
+    <a href="/api/export/activity" class="btn btn-outline" download>
+      ⬇ Export Activity CSV
+    </a>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Action Category</th>
+            <th>Event Details</th>
+          </tr>
+        </thead>
+        <tbody id="activityTableBody">
+          <tr>
+            <td colspan="3" class="text-center p-4 text-muted">Loading activity log entries...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const res = await fetch("/api/activity");
+    const json = await res.json();
+    const tbody = document.getElementById("activityTableBody");
+    tbody.innerHTML = "";
+
+    if (!json.success || !json.data || json.data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="text-center p-4 text-muted">No activities recorded yet.</td></tr>`;
+      return;
+    }
+
+    json.data.forEach(log => {
+      const tr = document.createElement("tr");
+      let actionBadge = `<span class="badge badge-outline">${log.action}</span>`;
+      if (log.action.includes("Transfer Approved")) {
+        actionBadge = `<span class="badge badge-green">✓ ${log.action}</span>`;
+      } else if (log.action.includes("Triggered")) {
+        actionBadge = `<span class="badge badge-red">🚨 ${log.action}</span>`;
+      } else if (log.action.includes("Resolved")) {
+        actionBadge = `<span class="badge badge-green">✓ ${log.action}</span>`;
+      }
+
+      tr.innerHTML = `
+        <td style="white-space:nowrap; font-size:0.8rem; color:var(--slate-500);">${log.timestamp}</td>
+        <td>${actionBadge}</td>
+        <td><strong>${log.details}</strong></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Error loading activity:", err);
+  }
+});
+</script>
+{% endblock %}

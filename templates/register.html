@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register New Primary Health Centre - MediTrack PHC</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .register-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      padding: 2.5rem 1rem;
+    }
+    .register-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+      max-width: 580px;
+      width: 100%;
+      padding: 2.25rem;
+    }
+  </style>
+</head>
+<body style="background: #0f172a;">
+  <div class="register-container">
+    <div class="register-card">
+      <div style="text-align:center; margin-bottom: 1.5rem;">
+        <div class="brand-icon" style="margin: 0 auto 0.75rem; width:52px; height:52px; font-size:1.75rem;">🏥</div>
+        <h1 style="font-size:1.45rem; font-weight:800; color:var(--slate-900);">
+          Register New Primary Health Centre
+        </h1>
+        <p style="font-size:0.85rem; color:var(--slate-500); margin-top:0.25rem;">
+          Add a new hospital or health sub-centre to the MediTrack peer-to-peer redistribution network.
+        </p>
+      </div>
+
+      {% if error %}
+      <div style="background:#fee2e2; border-left:4px solid var(--danger); padding:0.75rem 1rem; border-radius:var(--radius-sm); color:#991b1b; font-size:0.85rem; margin-bottom:1.25rem;">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/register">
+        <div class="form-group">
+          <label class="form-label">Hospital / PHC Name</label>
+          <input type="text" name="name" class="form-control" placeholder="e.g. Mohanur PHC" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Location / Block</label>
+          <input type="text" name="location" class="form-control" placeholder="e.g. Mohanur, Namakkal District" required>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">GPS Latitude</label>
+            <input type="number" step="any" name="latitude" class="form-control" value="11.0825" placeholder="e.g. 11.0825" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">GPS Longitude</label>
+            <input type="number" step="any" name="longitude" class="form-control" value="78.1420" placeholder="e.g. 78.1420" required>
+          </div>
+        </div>
+        <small style="color:var(--slate-400); font-size:0.75rem; display:block; margin-top:-0.75rem; margin-bottom:1rem;">
+          ℹ️ GPS coordinates are used by the Haversine formula to find the nearest surplus donor within 15 km.
+        </small>
+
+        <div class="form-group">
+          <label class="form-label">Official Contact Email (Optional)</label>
+          <input type="email" name="contact_email" class="form-control" placeholder="e.g. mohanur.phc@tnhealth.gov.in">
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">Username (for sign in)</label>
+            <input type="text" name="username" class="form-control" placeholder="e.g. mohanur" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" value="phc123" placeholder="Enter password" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" style="padding:0.75rem; font-size:0.95rem; font-weight:700; margin-top:0.5rem;">
+          ✓ Complete Registration &amp; Enter Dashboard →
+        </button>
+      </form>
+
+      <div style="text-align:center; margin-top:1.5rem; padding-top:1.25rem; border-top:1px solid var(--slate-200);">
+        <span style="font-size:0.85rem; color:var(--slate-500);">Already have an account?</span>
+        <a href="/login" style="font-size:0.85rem; font-weight:700; color:var(--primary); margin-left:6px; text-decoration:none;">
+          Sign In here →
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

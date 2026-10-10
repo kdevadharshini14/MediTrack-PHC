@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics & Forecast - {{ current_phc.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1 class="page-title">
+      📈 {{ current_phc.name }} — Consumption Analytics &amp; 7-Day Forecast
+    </h1>
+    <p class="page-desc">
+      Inspect high-demand medicines dispensed at your centre and forecast rolling 7-day future stock requirements.
+    </p>
+  </div>
+</div>
+
+<!-- SECTION 1: CONSUMPTION BAR CHART -->
+<div class="card mb-4">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">📊 Highest-Demand Medicines ({{ current_phc.name }})</h2>
+      <p class="card-desc">Bar color indicates current health status of your stock for each medicine.</p>
+    </div>
+    <div style="display:inline-flex; border:1px solid var(--slate-300); border-radius:var(--radius-sm); overflow:hidden;">
+      <button class="btn btn-primary btn-sm" id="btnPeriodWeekly">Weekly (7d)</button>
+      <button class="btn btn-outline btn-sm" id="btnPeriodMonthly">Monthly (30d)</button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div style="display:flex; gap:1.25rem; font-size:0.8rem; margin-bottom:1rem; justify-content:flex-end;">
+      <span><span style="display:inline-block; width:12px; height:12px; background:#10b981; border-radius:2px; vertical-align:middle; margin-right:4px;"></span> Stock Adequate (&ge;2x Min)</span>
+      <span><span style="display:inline-block; width:12px; height:12px; background:#f59e0b; border-radius:2px; vertical-align:middle; margin-right:4px;"></span> Buffer Warning (&lt;2x Min)</span>
+      <span><span style="display:inline-block; width:12px; height:12px; background:#ef4444; border-radius:2px; vertical-align:middle; margin-right:4px;"></span> Shortage (&lt;Min)</span>
+    </div>
+
+    <div style="position:relative; height:340px; width:100%;">
+      <canvas id="consumptionChartCanvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: 7-DAY DEMAND FORECAST LINE CHART -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h2 class="card-title">📈 7-Day Moving-Average Demand Forecast</h2>
+      <p class="card-desc">
+        Project upcoming buffer needs based on your centre's recent dispensing velocity. Past 14 days actual vs. Next 7 days projected.
+      </p>
+    </div>
+    <div>
+      <select class="form-select form-select-sm" id="forecastMedicineSelect" style="width:240px;">
+        <!-- Injected via analytics.js -->
+      </select>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="metrics-grid" style="grid-template-columns: 1fr 1fr; margin-bottom:1.5rem;">
+      <div class="metric-card">
+        <div class="metric-icon-box metric-teal">⚡</div>
+        <div class="metric-info">
+          <h3 id="forecastDailyRate">—</h3>
+          <p>Rolling Daily Burn Rate</p>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon-box metric-amber">📦</div>
+        <div class="metric-info">
+          <h3 id="forecast7DayTotal">—</h3>
+          <p>Projected 7-Day Demand</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="position:relative; height:360px; width:100%;">
+      <canvas id="forecastChartCanvas"></canvas>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

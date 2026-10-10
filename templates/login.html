@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PHC Staff Login - MediTrack PHC</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      padding: 2rem 1rem;
+    }
+    .login-card {
+      background: var(--white);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+      max-width: 480px;
+      width: 100%;
+      padding: 2.25rem;
+      margin-bottom: 2rem;
+    }
+    .demo-selector-card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      border-radius: var(--radius-lg);
+      max-width: 680px;
+      width: 100%;
+      padding: 1.75rem;
+      color: var(--white);
+    }
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.85rem;
+      margin-top: 1rem;
+    }
+    .demo-btn {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+      color: var(--white);
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      text-decoration: none;
+    }
+    .demo-btn:hover {
+      background: rgba(255, 255, 255, 0.22);
+      transform: translateY(-2px);
+      border-color: var(--primary-light);
+    }
+  </style>
+</head>
+<body style="background: #0f172a;">
+  <div class="login-container">
+    
+    <!-- LOGIN BOX -->
+    <div class="login-card">
+      <div style="text-align:center; margin-bottom: 1.75rem;">
+        <div class="brand-icon" style="margin: 0 auto 0.75rem; width:52px; height:52px; font-size:1.75rem;">⚕</div>
+        <h1 style="font-size:1.45rem; font-weight:800; color:var(--slate-900); letter-spacing:-0.02em;">
+          MediTrack PHC Portal
+        </h1>
+        <p style="font-size:0.85rem; color:var(--slate-500); margin-top:0.25rem;">
+          Sign in to your Primary Health Centre to access local stock and lateral peer redistribution.
+        </p>
+      </div>
+
+      {% if error %}
+      <div style="background:#fee2e2; border-left:4px solid var(--danger); padding:0.75rem 1rem; border-radius:var(--radius-sm); color:#991b1b; font-size:0.85rem; margin-bottom:1.25rem;">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/login">
+        <div class="form-group">
+          <label class="form-label">Select Primary Health Centre / Username</label>
+          <select name="username" class="form-select" required>
+            <option value="" disabled selected>Choose your PHC Hospital...</option>
+            {% for p in phcs %}
+            <option value="{{ p.username }}">{{ p.name }} ({{ p.location }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-control" value="phc123" placeholder="Enter password" required>
+          <small style="color:var(--slate-400); font-size:0.75rem; display:block; margin-top:4px;">
+            Default demo password is <code>phc123</code>
+          </small>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" style="padding:0.75rem; font-size:0.95rem; font-weight:700;">
+          Sign In to PHC Workspace →
+        </button>
+
+        <div style="text-align:center; margin-top:1.25rem;">
+          <a href="/register" class="btn btn-outline btn-sm w-100" style="border-style:dashed;">
+            ➕ Register a New PHC Hospital
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- ONE-CLICK QUICK DEMO SWITCHER -->
+    <div class="demo-selector-card">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h3 style="font-size:1.05rem; font-weight:700;">⚡ Quick Demo Login (One-Click)</h3>
+          <p style="font-size:0.8rem; color:rgba(255,255,255,0.7); margin-top:2px;">
+            Click any hospital below to instantly test its individual perspective and data:
+          </p>
+        </div>
+      </div>
+
+      <div class="demo-grid">
+        <a href="/login?quick=komarapalayam" class="demo-btn" style="border-left: 4px solid var(--danger);">
+          <strong style="color:#fca5a5;">🚨 Komarapalayam PHC</strong>
+          <span style="font-size:0.75rem; color:rgba(255,255,255,0.8);">
+            Critical Shortage: Paracetamol syrup (2 days left)
+          </span>
+        </a>
+
+        <a href="/login?quick=pallipalayam" class="demo-btn" style="border-left: 4px solid var(--success);">
+          <strong style="color:#86efac;">🟢 Pallipalayam PHC</strong>
+          <span style="font-size:0.75rem; color:rgba(255,255,255,0.8);">
+            Surplus Donor (10.3 km away, 340 extra units)
+          </span>
+        </a>
+
+        <a href="/login?quick=tiruchengode" class="demo-btn" style="border-left: 4px solid #fcd34d;">
+          <strong style="color:#fef08a;">🟡 Tiruchengode PHC</strong>
+          <span style="font-size:0.75rem; color:rgba(255,255,255,0.8);">
+            Surplus Donor (22.5 km away, buffer warning)
+          </span>
+        </a>
+
+        <a href="/login?quick=namakkal" class="demo-btn">
+          <strong>🏥 Namakkal Town PHC</strong>
+          <span style="font-size:0.75rem; color:rgba(255,255,255,0.8);">
+            Large Town Centre, ORS Surplus
+          </span>
+        </a>
+
+        <a href="/login?quick=rasipuram" class="demo-btn">
+          <strong>🏥 Rasipuram PHC</strong>
+          <span style="font-size:0.75rem; color:rgba(255,255,255,0.8);">
+            High acute patient load
+          </span>
+        </a>
+
+        <a href="/login?quick=pvelur" class="demo-btn" style="border-left: 4px solid var(--orange);">
+          <strong style="color:#fdba74;">📦 Paramathi Velur PHC</strong>
+          <span style="font-size:0.75rem; color:rgba(255,255,255,0.8);">
+            Has stock expiring in 18 days
+          </span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
