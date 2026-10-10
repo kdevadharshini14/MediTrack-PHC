@@ -14,6 +14,7 @@ async function setupUsagePage() {
   document.getElementById("usageDate").value = today;
 
   await loadMyInventory();
+  updateUsageOfflineBanner();
 
   document.getElementById("addRowBtn").addEventListener("click", () => addUsageRow());
   document.getElementById("usageForm").addEventListener("submit", handleUsageSubmit);
@@ -28,13 +29,29 @@ async function loadMyInventory() {
       json.data.forEach(s => {
         phcStockCache[s.medicine_id] = s;
       });
+      localStorage.setItem("meditrack_cached_stock", JSON.stringify(phcStockCache));
 
       const container = document.getElementById("usageItemsContainer");
       container.innerHTML = "";
       addUsageRow(); // Add initial fresh row
+      return;
     }
   } catch (err) {
-    console.error("Error loading inventory for dispensing:", err);
+    console.warn("Network error loading inventory; falling back to offline cache:", err);
+  }
+
+  // Fallback to offline cached stock
+  const cached = localStorage.getItem("meditrack_cached_stock");
+  if (cached) {
+    try {
+      phcStockCache = JSON.parse(cached);
+      const container = document.getElementById("usageItemsContainer");
+      container.innerHTML = "";
+      addUsageRow();
+      showToast("Loaded stock from offline cache", "info");
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 
@@ -181,6 +198,12 @@ async function handleUsageSubmit(e) {
     return;
   }
 
+  // If browser is actively offline, store directly into local outbox
+  if (!navigator.onLine) {
+    saveToOfflineOutboxLocally(usageDate, items);
+    return;
+  }
+
   try {
     const res = await fetch("/api/usage", {
       method: "POST",
@@ -196,10 +219,65 @@ async function handleUsageSubmit(e) {
       showToast("Daily dispensing saved & stock deducted successfully!", "success");
       await loadMyInventory();
       refreshAlertCount();
+      updateUsageOfflineBanner();
     } else {
       showToast(json.error || "Failed to record usage", "error");
     }
   } catch (err) {
-    showToast("Error recording dispensing", "error");
+    console.warn("Network error during submission; queuing into offline outbox:", err);
+    saveToOfflineOutboxLocally(usageDate, items);
   }
+}
+
+function saveToOfflineOutboxLocally(usageDate, items) {
+  // Store session in offline queue
+  addOfflineOutboxEntry({
+    date: usageDate,
+    items: items
+  });
+
+  // Locally deduct from cached inventory so pharmacist sees immediate update
+  items.forEach(item => {
+    if (phcStockCache[item.medicine_id]) {
+      phcStockCache[item.medicine_id].quantity = Math.max(0, phcStockCache[item.medicine_id].quantity - item.quantity);
+    }
+  });
+  localStorage.setItem("meditrack_cached_stock", JSON.stringify(phcStockCache));
+
+  // Reset form to fresh row
+  const container = document.getElementById("usageItemsContainer");
+  container.innerHTML = "";
+  addUsageRow();
+
+  updateUsageOfflineBanner();
+  showToast("⚡ Network Offline: Dispensing saved safely in Local Outbox! Will sync automatically when network returns.", "warning");
+}
+
+function updateUsageOfflineBanner() {
+  const card = document.getElementById("offlineOutboxCard");
+  if (!card) return;
+
+  const outbox = getOfflineOutbox();
+  const isOnline = navigator.onLine;
+
+  if (outbox.length > 0 || !isOnline) {
+    card.style.display = "block";
+    const title = document.getElementById("offlineStatusTitle");
+    const desc = document.getElementById("offlineStatusDesc");
+
+    if (!isOnline) {
+      title.textContent = `Offline Mode Active • Outbox: ${outbox.length} Batches Pending Sync`;
+      desc.textContent = "Unreliable health centre connectivity detected. Entries are stored securely on this computer and will sync automatically once network returns.";
+    } else {
+      title.textContent = `Online • ${outbox.length} Offline Dispensing Batches Pending Sync`;
+      desc.textContent = "Network restored. Click 'Sync Now' below or system will auto-sync in the background.";
+    }
+  } else {
+    card.style.display = "none";
+  }
+}
+
+async function manualSyncOfflineOutbox() {
+  await syncOfflineOutbox();
+  updateUsageOfflineBanner();
 }

@@ -153,37 +153,63 @@ SMTP_PASSWORD=your-app-password
 ```
 *(If unset, email alerts skip silently without interrupting system operations).*
 
+## 💡 Innovative Features Added (Zero-Shortage & Zero-Wastage Architecture)
+
+### 1. 💡 Near-Expiry Smart Rescue Swap (மருந்து வீணாவதை 0% ஆக்கும் தலைகீழ் மறுபகிர்வு)
+* **Problem Solved:** Millions worth of medicines expire unused in rural clinics while busy taluk/district hospitals run out.
+* **Algorithm:** Projects actual consumption before expiry: `Wastage Risk = Current Qty - (Daily Burn Rate × Days to Expiry)`.
+* **Action:** When wastage risk is detected within 90 days, the AI automatically discovers high-volume sister hospitals and pairs them for an immediate 1-click **Rescue Swap**, preventing total expiry loss.
+
+### 2. ⚡ Autonomous Lateral Rebalance (தானியங்கி மறுபகிர்வு)
+* **Problem Solved:** Bureaucratic transfer paperwork takes days while emergency patients suffer.
+* **Mechanism:** When stock drops below 3 days buffer, the autonomous trigger scans nearby surplus centres within 15 km, enforces the **Donor Safety Rail** ($\ge 2\times$ min buffer), generates a **Digital Transit Waybill** (`TN-AUTO-WB-2026-XXXX`), and initiates dispatch in real time with 0s human delay.
+
+### 3. 📜 Digital Batch Passport & Birth-to-Dispense Traceability (டிஜிட்டல் மருந்து பாஸ்போர்ட்)
+* **Problem Solved:** Counterfeit drugs entering the supply chain and black market medicine leakage.
+* **Traceability:** Provides a complete 6-stage cryptographic audit trail:
+  1. 🏭 **Manufacture:** Pharma Plant (Apex Pharma Labs, Chennai), QC chemical purity assay, batch certificate SHA-256 hash.
+  2. 🏢 **TNMSC Central Depot:** Namakkal Depot inward check, 2D DataMatrix minting, cold-chain temp log.
+  3. 🏥 **Initial PHC Storage:** Hospital dispensary inward scan.
+  4. ⚡ **Autonomous Trigger:** MediTrack AI imbalance detection & automated transit waybill.
+  5. 🚚 **Live Health Courier:** GPS route, distance, ETA, IoT cold-chain temperature telemetry.
+  6. 🏥 **Target Dispensing Counter:** Verified receipt and Citizen OTP Proof-of-Consumption.
+* Accessible to both hospital pharmacists and citizens on the public portal!
+
 ---
 
 ## 📁 File Structure
 ```
 meditrack-phc/
 ├── app.py                     # Flask server, page routes, REST API & CSV exports
-├── database.py                # SQLite schema, indexes & audit logging helper
+├── database.py                # SQLite schema, migrations & audit logging helper
 ├── seed_data.py               # Namakkal District 6-PHC seed scenario
 ├── services/
 │   ├── stock_service.py       # Velocity, burn rate, days_left, trend & atomic usage
 │   ├── alert_service.py       # Smart alert creation, deduplication & resolution
-│   ├── transfer_service.py    # Haversine distance, surplus logic & district indent
-│   └── forecast_service.py    # 7-day Simple Moving Average demand forecasting
+│   ├── transfer_service.py    # Haversine distance, surplus logic & autonomous rebalance
+│   ├── forecast_service.py    # 7-day Simple Moving Average demand forecasting
+│   ├── epidemic_service.py    # Block-level outbreak cluster detection radar
+│   ├── expiry_rescue_service.py # Near-Expiry Smart Rescue Swap (Zero-Wastage)
+│   └── passport_service.py    # Digital Batch Passport (Birth-to-Dispense Provenance)
 ├── templates/
-│   ├── base.html              # Layout, navbar, Tamil/English toggle & notification bell
-│   ├── dashboard.html         # Metrics, red banner, rebalance pairs & health heatmap
-│   ├── stock.html             # Stock table, search, update modal & add modal
+│   ├── base.html              # Layout, navbar, Digital Batch Passport modal & language toggle
+│   ├── dashboard.html         # Metrics, red banner, rescue swap radar & inventory snapshot
+│   ├── stock.html             # Stock table with Batch No & Digital Passport launcher
 │   ├── usage.html             # Daily outpatient multi-item dispensing form
 │   ├── analytics.html         # Chart.js weekly/monthly demand & forecast line chart
-│   ├── requests.html          # Peer transfer approvals & district indent table
+│   ├── requests.html          # Peer transfer approvals, live transit tracking & waybills
 │   ├── alerts.html            # Shortage alerts & nearest donor suggestion cards
-│   └── activity.html          # Full system audit trail
+│   ├── activity.html          # Full system audit trail
+│   └── citizen.html           # Public medicine availability & drug origin verification
 ├── static/
-│   ├── css/style.css          # Healthcare UI design system & responsive styling
+│   ├── css/style.css          # Healthcare UI design system, transit stepper & passport timeline
 │   └── js/
-│       ├── common.js          # Bilingual dictionary, toasts, modal helpers & alert counter
-│       ├── dashboard.js       # Dashboard cards, rebalance logic & heatmap renderer
-│       ├── stock.js           # Inventory filtering, edit modals & status badges
+│       ├── common.js          # 100% Pure Bilingual engine, toasts & global passport viewer
+│       ├── dashboard.js       # Dashboard cards, rescue swap triggers & auto-rebalance
+│       ├── stock.js           # Inventory filtering, batch passport inspection & edit modals
 │       ├── usage.js           # Dynamic dispensing rows & stock validation
 │       ├── analytics.js       # Bar charts & moving-average forecast lines
-│       ├── requests.js        # Transfer approvals, rejections & indent renderer
+│       ├── requests.js        # Transfer approvals, rejections & waybill badges
 │       └── alerts.js          # Velocity alert cards & one-click transfer requests
 ├── requirements.txt
 └── README.md

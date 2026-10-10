@@ -114,6 +114,21 @@ def init_db():
     CREATE INDEX IF NOT EXISTS idx_citizen_phone ON citizen(phone);
     """)
 
+    # Safe Migrations for existing database
+    cursor.execute("PRAGMA table_info(stock)")
+    stock_cols = [c[1] for c in cursor.fetchall()]
+    if 'batch_no' not in stock_cols:
+        cursor.execute("ALTER TABLE stock ADD COLUMN batch_no TEXT")
+
+    cursor.execute("PRAGMA table_info(transfer_request)")
+    tr_cols = [c[1] for c in cursor.fetchall()]
+    if 'waybill_no' not in tr_cols:
+        cursor.execute("ALTER TABLE transfer_request ADD COLUMN waybill_no TEXT")
+    if 'dispatch_type' not in tr_cols:
+        cursor.execute("ALTER TABLE transfer_request ADD COLUMN dispatch_type TEXT DEFAULT 'MANUAL'")
+    if 'batch_no' not in tr_cols:
+        cursor.execute("ALTER TABLE transfer_request ADD COLUMN batch_no TEXT")
+
     conn.commit()
     conn.close()
 

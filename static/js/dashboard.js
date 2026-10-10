@@ -14,6 +14,7 @@ async function loadDashboardData() {
       loadMetricCounts(),
       loadCriticalAlertBanner(),
       loadEpidemicRadar(),
+      loadRescueSwapRadar(),
       loadIncomingRequests(),
       loadMyStockSnapshot()
     ]);
@@ -91,6 +92,89 @@ async function loadEpidemicRadar() {
     }
   } catch (err) {
     console.error("Error loading epidemic radar:", err);
+  }
+}
+
+async function loadRescueSwapRadar() {
+  try {
+    const res = await fetch("/api/expiry_rescue");
+    const json = await res.json();
+    const card = document.getElementById("rescueSwapCard");
+    if (!card) return;
+
+    if (json.success && json.data && json.data.length > 0) {
+      const cand = json.data[0];
+      document.getElementById("rescueSwapTitle").textContent = 
+        `Impending Expiry Wastage: ${cand.medicine_name} (${cand.batch_no})`;
+      document.getElementById("rescueSwapDescription").textContent = 
+        `Local burn at ${cand.source_phc_name} is only ${cand.source_daily_burn}/day. ${cand.wastage_risk_qty} units will expire unused in ${cand.days_to_expiry} days! Automated transfer to ${cand.target_phc.target_phc_name} (${cand.target_phc.target_daily_burn}/day burn rate) will prevent total loss.`;
+
+      document.getElementById("rescueSwapMetrics").innerHTML = `
+        <span>📅 <strong>Expires:</strong> ${cand.expiry_date} (${cand.days_to_expiry} days left)</span>
+        <span>⚠️ <strong>At-Risk Wastage:</strong> ${cand.rescue_qty} ${cand.medicine_unit}</span>
+        <span>🏥 <strong>Target:</strong> ${cand.target_phc.target_phc_name} (${cand.target_phc.distance_km} km)</span>
+        <span style="color:#15803d;">💰 <strong>Prevented Loss:</strong> ₹${cand.loss_prevented_rs}</span>
+      `;
+
+      document.getElementById("rescueSwapActionContainer").innerHTML = `
+        <button class="btn btn-warning btn-sm" style="background:#d97706; color:white; font-weight:700;" onclick="executeRescueSwap(${cand.source_phc_id}, ${cand.target_phc.target_phc_id}, ${cand.medicine_id}, ${cand.rescue_qty})">
+          ⚡ Execute Smart Rescue Swap
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="viewDigitalBatchPassport(${cand.medicine_id}, ${cand.source_phc_id}, '${cand.batch_no}')">
+          📜 View Batch Passport
+        </button>
+      `;
+
+      card.style.display = "block";
+    } else {
+      card.style.display = "none";
+    }
+  } catch (err) {
+    console.error("Error loading rescue swap radar:", err);
+  }
+}
+
+async function executeRescueSwap(srcId, tgtId, medId, qty) {
+  try {
+    const res = await fetch("/api/expiry_rescue/swap", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source_phc_id: srcId,
+        target_phc_id: tgtId,
+        medicine_id: medId,
+        quantity: qty
+      })
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast(json.message || "Smart Expiry Rescue Swap executed!", "success");
+      loadDashboardData();
+    } else {
+      showToast(json.error || "Failed to execute rescue swap", "error");
+    }
+  } catch (err) {
+    showToast("Network error executing swap", "error");
+  }
+}
+
+async function triggerAutoRebalance(medId, medName) {
+  try {
+    const res = await fetch("/api/auto_rebalance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ medicine_id: medId })
+    });
+    const json = await res.json();
+    if (json.success) {
+      showToast(json.message, "success");
+      loadDashboardData();
+      refreshAlertCount();
+    } else {
+      showToast(json.error || "Auto-rebalance failed", "error");
+    }
+  } catch (err) {
+    showToast("Network error executing auto-rebalance", "error");
   }
 }
 
@@ -331,6 +415,11 @@ async function loadMyStockSnapshot() {
 
       let trendClass = s.trend === "UP" ? "trend-up" : s.trend === "DOWN" ? "trend-down" : "trend-stable";
 
+      const isCriticalDeficit = (s.days_left_status === "RED" || s.qty_status === "RED");
+      const autoRebalanceBtn = isCriticalDeficit
+        ? `<button class="btn btn-danger btn-sm" style="margin-right:4px;" onclick="triggerAutoRebalance(${s.medicine_id}, '${s.medicine_name}')" title="Autonomous Lateral Rebalance (0s delay)">⚡ Auto-Rebalance</button>`
+        : "";
+
       tr.innerHTML = `
         <td><strong>${s.medicine_name}</strong> <div style="font-size:0.75rem; color:var(--slate-500);">${s.medicine_unit}</div></td>
         <td><span class="badge badge-outline">${s.medicine_category}</span></td>
@@ -340,7 +429,13 @@ async function loadMyStockSnapshot() {
         <td>${daysBadge}</td>
         <td><span class="trend-badge ${trendClass}">${s.trend_symbol} ${s.trend_label}</span></td>
         <td>
-          <a href="/stock" class="btn btn-outline btn-sm">Inspect</a>
+          <div style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
+            ${autoRebalanceBtn}
+            <button class="btn btn-outline btn-sm" onclick="viewDigitalBatchPassport(${s.medicine_id}, ${s.phc_id}, '${s.batch_no}')">
+              📜 Passport
+            </button>
+            <a href="/stock" class="btn btn-secondary btn-sm">Inspect</a>
+          </div>
         </td>
       `;
       tbody.appendChild(tr);

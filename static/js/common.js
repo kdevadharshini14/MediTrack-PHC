@@ -248,6 +248,31 @@ const rawTamilTranslations = [
   ["Citizen Stock Checker", "பொதுமக்கள் மருந்து இருப்பு சரிபார்ப்பு"],
   ["Public Stock Check", "பொதுமக்கள் இருப்பு தகவல்"],
   ["Public / Citizen Stock Checker", "பொதுமக்கள் மருந்து இருப்பு தகவல்"],
+  ["Digital Batch Passport & Origin Traceability", "டிஜிட்டல் மருந்து பாஸ்போர்ட் & உற்பத்தி வரலாறு"],
+  ["Digital Batch Passport", "டிஜிட்டல் மருந்து பாஸ்போர்ட்"],
+  ["Batch Passport", "பேட்ச் பாஸ்போர்ட்"],
+  ["View Passport", "பாஸ்போர்ட் பார்க்க"],
+  ["Near-Expiry Smart Rescue Swap", "காலாவதி தடுப்பு தலைகீழ் மறுபகிர்வு"],
+  ["Smart Expiry Rescue Swap", "காலாவதி தடுப்பு தலைகீழ் மறுபகிர்வு"],
+  ["Execute Smart Rescue Swap", "மருந்தை வீணாகாமல் மாற்று"],
+  ["Autonomous Lateral Rebalance", "தானியங்கி மறுபகிர்வு"],
+  ["Auto-Rebalance Now", "தானாகவே வரவழை"],
+  ["Proof of Consumption", "நோயாளிக்கு சென்றடைந்த உறுதிப்படுத்தல்"],
+  ["Zero Medicine Wastage", "பூஜ்ஜிய மருந்து வீணடிப்பு"],
+  ["100% Verified Genuine", "100% அரசு அங்கீகரித்த அசல் மருந்து"],
+  ["Cryptographic Provenance Verified", "கிரிப்டோகிராஃபிக் முறையில் சரிபார்க்கப்பட்டது"],
+  ["Cold Chain Oracle", "குளிர்சாதனப் பாதுகாப்பு நிலை"],
+  ["Genesis Root Hash", "தொடக்க உற்பத்தி ஹாஷ்"],
+  ["Tamper-Proof Audit Trail", "மாற்ற முடியாத பாதுகாப்பு பதிவு"],
+  ["Verify Medicine Origin", "மருந்தின் தயாரிப்பு & வரலாற்றை சரிபார்"],
+  ["Zero Counterfeit Verified", "போலி மருந்து இல்லை என உறுதி செய்யப்பட்டது"],
+  ["Offline Mode", "இணையமில்லா ஆஃப்லைன் முறை"],
+  ["Online", "இணைய இணைப்பு உள்ளது"],
+  ["Online (Auto-Sync Active)", "இணைய இணைப்பு உள்ளது (தானியங்கி சேமிப்பு இயக்கத்தில்)"],
+  ["Offline Mode • Outbox", "ஆஃப்லைன் முறை • அவுட்பாக்ஸ்"],
+  ["Sync Now", "உடனே சேமி"],
+  ["Offline Outbox Active", "ஆஃப்லைன் அவுட்பாக்ஸ் செயல்படுகிறது"],
+  ["Pharmacist 1-Sentence Action Guide", "மருந்தாளுனருக்கான நேரடி செயல் வழிகாட்டி"],
   ["No mother walks in vain", "தாய்மார்கள் ஏமாறாமல் இருக்க"],
   ["No mother walks 6 km in vain", "எந்தவொரு தாயும் ஏமாந்து 6 கி.மீ நடக்காமல் இருக்க"],
   ["Select Essential Medicine", "அத்தியாவசிய மருந்தை தேர்வு செய்யவும்"],
@@ -545,6 +570,7 @@ document.addEventListener("DOMContentLoaded", () => {
   applyLanguage(currentLang);
   refreshAlertCount();
   setupDynamicMutationObserver();
+  initOfflineSyncManager();
 
   const langBtn = document.getElementById("langToggleBtn");
   if (langBtn) {
@@ -560,3 +586,197 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 });
+
+// GLOBAL DIGITAL BATCH PASSPORT VIEWER (BIRTH-TO-DISPENSE TRACEABILITY)
+async function viewDigitalBatchPassport(medId, phcId, batchNo, reqId) {
+  const modal = document.getElementById("digitalBatchPassportModal");
+  if (!modal) return;
+
+  const timelineContainer = document.getElementById("passportTimelineContainer");
+  timelineContainer.innerHTML = '<div class="text-center p-4 text-muted">Loading cryptographic lineage & batch passport...</div>';
+  modal.classList.add("show");
+
+  let query = "";
+  if (medId) query += `medicine_id=${medId}&`;
+  if (phcId) query += `phc_id=${phcId}&`;
+  if (batchNo) query += `batch_no=${encodeURIComponent(batchNo)}&`;
+  if (reqId) query += `request_id=${reqId}&`;
+
+  try {
+    const res = await fetch(`/api/batch_passport?${query}`);
+    const data = await res.json();
+    if (!data.success) {
+      showToast(data.error || "Failed to load passport", "error");
+      return;
+    }
+
+    const p = data.data;
+    document.getElementById("passportBatchSubtitle").textContent = `Batch: ${p.batch_no} • Cryptographic Provenance Verified`;
+    document.getElementById("passportMedName").textContent = p.medicine_name;
+    document.getElementById("passportBatchNo").textContent = p.batch_no;
+    document.getElementById("passportManufacturer").textContent = p.manufacturer;
+    document.getElementById("passportTempStatus").textContent = p.temperature_safe;
+    document.getElementById("passportRootHash").textContent = p.merkle_root_hash;
+
+    const isTamil = (currentLang === "ta");
+    let html = "";
+    p.timeline.forEach(step => {
+      const title = isTamil && step.title_ta ? step.title_ta : step.title;
+      const statusText = isTamil && step.status_ta ? step.status_ta : step.status;
+      const detailsText = isTamil && step.details_ta ? step.details_ta : step.details;
+
+      html += `
+        <div class="passport-step">
+          <div class="passport-step-dot">${step.step}</div>
+          <div class="passport-step-card">
+            <div class="passport-step-header">
+              <div>
+                <span class="badge ${step.status_class}" style="font-size:0.75rem; margin-bottom:4px; display:inline-block;">
+                  ${step.badge}
+                </span>
+                <h4 style="margin:0; font-size:0.95rem; font-weight:700; color:var(--slate-800);">
+                  ${title}
+                </h4>
+              </div>
+              <span class="passport-crypto-badge" title="Cryptographic Block Hash">
+                🔗 ${step.crypto_proof}
+              </span>
+            </div>
+            <div style="font-size:0.8rem; color:var(--slate-600); margin-bottom:4px;">
+              📍 <strong>${step.facility}</strong> • ${step.location}
+            </div>
+            <p style="margin:4px 0 6px 0; font-size:0.85rem; color:var(--slate-700);">
+              ${detailsText}
+            </p>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:var(--slate-500); border-top:1px dashed var(--slate-200); padding-top:4px;">
+              <span>🕒 ${step.date}</span>
+              <strong style="color:var(--primary);">${statusText}</strong>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    timelineContainer.innerHTML = html;
+    if (isTamil) {
+      translateNode(modal, "ta");
+    }
+  } catch (err) {
+    console.error(err);
+    timelineContainer.innerHTML = '<div class="text-danger p-3">Failed to load Batch Passport details.</div>';
+  }
+}
+
+// ==========================================
+// OFFLINE-FIRST LOCAL OUTBOX & SYNC MANAGER
+// ==========================================
+const OFFLINE_OUTBOX_KEY = "meditrack_offline_outbox";
+
+function getOfflineOutbox() {
+  try {
+    return JSON.parse(localStorage.getItem(OFFLINE_OUTBOX_KEY) || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveOfflineOutbox(items) {
+  localStorage.setItem(OFFLINE_OUTBOX_KEY, JSON.stringify(items));
+  updateNetworkStatusUI();
+}
+
+function addOfflineOutboxEntry(entry) {
+  const outbox = getOfflineOutbox();
+  outbox.push({
+    id: Date.now(),
+    date: entry.date,
+    items: entry.items,
+    timestamp: new Date().toISOString()
+  });
+  saveOfflineOutbox(outbox);
+}
+
+function clearOfflineOutbox() {
+  localStorage.removeItem(OFFLINE_OUTBOX_KEY);
+  updateNetworkStatusUI();
+}
+
+function updateNetworkStatusUI() {
+  const pill = document.getElementById("networkStatusPill");
+  const text = document.getElementById("networkStatusText");
+  if (!pill || !text) return;
+
+  const isOnline = navigator.onLine;
+  const outbox = getOfflineOutbox();
+  const pendingCount = outbox.length;
+
+  if (isOnline) {
+    if (pendingCount > 0) {
+      pill.className = "network-pill online";
+      text.textContent = `Online • ${pendingCount} to Sync`;
+    } else {
+      pill.className = "network-pill online";
+      text.textContent = "Online";
+    }
+  } else {
+    pill.className = "network-pill offline";
+    text.textContent = `Offline Mode • Outbox: ${pendingCount}`;
+  }
+}
+
+async function syncOfflineOutbox() {
+  const outbox = getOfflineOutbox();
+  if (!outbox || outbox.length === 0) return;
+
+  if (!navigator.onLine) {
+    showToast("Cannot sync: Internet connection is offline", "warning");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/sync/batch", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessions: outbox })
+    });
+    const json = await res.json();
+    if (json.success) {
+      const count = outbox.length;
+      clearOfflineOutbox();
+      showToast(`✓ Synchronized ${count} offline dispensing batches with server!`, "success");
+      if (typeof loadMyInventory === "function") {
+        await loadMyInventory();
+      }
+      refreshAlertCount();
+      if (typeof updateUsageOfflineBanner === "function") {
+        updateUsageOfflineBanner();
+      }
+    } else {
+      showToast(json.error || "Failed to sync offline sessions", "error");
+    }
+  } catch (err) {
+    console.warn("Background sync failed; will retry when network returns:", err);
+  }
+}
+
+function initOfflineSyncManager() {
+  updateNetworkStatusUI();
+
+  window.addEventListener("online", () => {
+    updateNetworkStatusUI();
+    showToast("Internet restored! Syncing queued offline outbox...", "info");
+    syncOfflineOutbox();
+  });
+
+  window.addEventListener("offline", () => {
+    updateNetworkStatusUI();
+    showToast("Network offline: MediTrack switched to offline local outbox mode", "warning");
+  });
+
+  // If online on page load and pending entries exist, sync them
+  if (navigator.onLine && getOfflineOutbox().length > 0) {
+    setTimeout(syncOfflineOutbox, 1500);
+  }
+}
+
+

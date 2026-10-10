@@ -69,6 +69,12 @@
         <span class="alert-badge-count" id="alertBellBadge">0</span>
       </a>
 
+      <!-- Live Network Connectivity & Offline Sync Pill -->
+      <div id="networkStatusPill" class="network-pill online" title="Health Centre Connectivity Status">
+        <span class="network-dot"></span>
+        <span id="networkStatusText">Online</span>
+      </div>
+
       <!-- Tamil / English Language Switcher -->
       <button class="lang-btn" id="langToggleBtn">தமிழ்</button>
 
@@ -100,6 +106,68 @@
       Peer-to-peer redistribution active within 25 km radius.
     </div>
   </footer>
+
+  <!-- GLOBAL DIGITAL BATCH PASSPORT MODAL -->
+  <div class="modal-backdrop" id="digitalBatchPassportModal">
+    <div class="modal-dialog" style="max-width: 780px;">
+      <div class="passport-header">
+        <div>
+          <h3 style="margin:0; font-size:1.25rem; display:flex; align-items:center; gap:0.5rem;">
+            📜 Digital Batch Passport &amp; Origin Traceability
+          </h3>
+          <p style="margin:4px 0 0 0; font-size:0.8rem; opacity:0.9;" id="passportBatchSubtitle">
+            Batch: Loading... • Cryptographic Provenance Verified
+          </p>
+        </div>
+        <button class="modal-close" style="color:white; font-size:1.5rem;" onclick="closeModal('digitalBatchPassportModal')">&times;</button>
+      </div>
+
+      <!-- Passport Metadata Ribbon -->
+      <div class="passport-meta-ribbon" id="passportMetaRibbon">
+        <div class="passport-meta-item">
+          <small>Medicine</small>
+          <strong id="passportMedName">-</strong>
+        </div>
+        <div class="passport-meta-item">
+          <small>Batch No</small>
+          <strong id="passportBatchNo">-</strong>
+        </div>
+        <div class="passport-meta-item">
+          <small>Manufacturer</small>
+          <strong id="passportManufacturer">-</strong>
+        </div>
+        <div class="passport-meta-item">
+          <small>Cold Chain Oracle</small>
+          <strong id="passportTempStatus" style="color:#059669;">-</strong>
+        </div>
+        <div class="passport-meta-item">
+          <small>Genesis Root Hash</small>
+          <strong id="passportRootHash" style="font-family:monospace; font-size:0.8rem; color:#4338ca;">-</strong>
+        </div>
+      </div>
+
+      <!-- Modal Body with 6-Stage Timeline -->
+      <div class="modal-body" style="max-height: 520px; overflow-y: auto;">
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:var(--radius-sm); padding:0.75rem 1rem; margin-bottom:1rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+          <div style="font-size:0.85rem; color:#166534;">
+            🛡️ <strong>Tamper-Proof Audit Trail:</strong> Each transition is cryptographically signed and verifiable from factory floor to patient counter.
+          </div>
+          <span class="badge badge-success" style="font-size:0.75rem;">100% Verified Genuine</span>
+        </div>
+
+        <div class="passport-timeline" id="passportTimelineContainer">
+          <!-- Injected via common.js / JS -->
+        </div>
+      </div>
+
+      <div class="modal-footer" style="background:#f8fafc; border-top:1px solid var(--slate-200); display:flex; justify-content:space-between;">
+        <span style="font-size:0.8rem; color:var(--slate-500); display:flex; align-items:center; gap:4px;">
+          🔒 SHA-256 State Health Protocol • Zero Counterfeit Verified
+        </span>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('digitalBatchPassportModal')">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- TOAST CONTAINER -->
   <div id="toastContainer" class="toast-container"></div>

@@ -60,18 +60,42 @@ async function loadIncomingRequests() {
             <button class="btn btn-outline btn-sm text-danger" onclick="rejectRequest(${r.id})">
               Reject
             </button>
+      let dispatchBadge = "";
+      if (r.dispatch_type === "AUTONOMOUS_TRIGGER") {
+        dispatchBadge = `<div style="margin-top:2px;"><span class="badge" style="background:#4338ca; color:white; font-size:0.7rem;">⚡ Autonomous Waybill</span></div>`;
+      } else if (r.dispatch_type === "RESCUE_SWAP") {
+        dispatchBadge = `<div style="margin-top:2px;"><span class="badge" style="background:#d97706; color:white; font-size:0.7rem;">💡 Smart Rescue Swap</span></div>`;
+      }
+
+      if (r.status === "pending") {
+        actions = `
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button class="btn btn-success btn-sm" onclick="approveRequest(${r.id}, '${r.medicine_name}', ${r.quantity})">
+              Approve
+            </button>
+            <button class="btn btn-outline btn-sm text-danger" onclick="rejectRequest(${r.id})">
+              Reject
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="viewDigitalBatchPassport(${r.medicine_id}, null, '${r.batch_no || ''}', ${r.id})">
+              📜 Passport
+            </button>
           </div>
         `;
       } else if (r.status === "approved") {
         actions = `
-          <button class="btn btn-outline btn-sm" onclick="openTrackModal(${r.id}, 'incoming')">
-            🚑 Track Dispatch
-          </button>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" onclick="openTrackModal(${r.id}, 'incoming')">
+              🚑 Track Dispatch
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="viewDigitalBatchPassport(${r.medicine_id}, null, '${r.batch_no || ''}', ${r.id})">
+              📜 Passport
+            </button>
+          </div>
         `;
       }
 
       tr.innerHTML = `
-        <td>${urgencyBadge}</td>
+        <td>${urgencyBadge} ${dispatchBadge}</td>
         <td><strong>${r.medicine_name}</strong> (${r.medicine_unit})</td>
         <td><strong>🏥 ${r.requester_name}</strong></td>
         <td><span class="badge badge-outline font-weight-bold" style="font-size:0.85rem;">${r.quantity}</span></td>
@@ -108,24 +132,46 @@ async function loadOutgoingRequests() {
         ? `<span class="badge badge-emergency">EMERGENCY</span>` 
         : `<span class="badge badge-yellow">NORMAL</span>`;
 
+      let dispatchBadge = "";
+      if (r.dispatch_type === "AUTONOMOUS_TRIGGER") {
+        dispatchBadge = `<div style="margin-top:2px;"><span class="badge" style="background:#4338ca; color:white; font-size:0.7rem;">⚡ Autonomous Waybill</span></div>`;
+      } else if (r.dispatch_type === "RESCUE_SWAP") {
+        dispatchBadge = `<div style="margin-top:2px;"><span class="badge" style="background:#d97706; color:white; font-size:0.7rem;">💡 Smart Rescue Swap</span></div>`;
+      }
+
       let statusBadge = "";
       let trackAction = "—";
 
       if (r.status === "approved") {
         statusBadge = `<span class="badge badge-green">✓ Stock Transferred & En Route</span>`;
         trackAction = `
-          <button class="btn btn-primary btn-sm" onclick="openTrackModal(${r.id}, 'outgoing')" style="box-shadow: 0 2px 6px rgba(16,185,129,0.3);">
-            🚑 Track Live Transit
-          </button>
+          <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" onclick="openTrackModal(${r.id}, 'outgoing')" style="box-shadow: 0 2px 6px rgba(16,185,129,0.3);">
+              🚑 Track Live Transit
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="viewDigitalBatchPassport(${r.medicine_id}, null, '${r.batch_no || ''}', ${r.id})">
+              📜 Passport
+            </button>
+          </div>
         `;
       } else if (r.status === "rejected") {
         statusBadge = `<span class="badge badge-red">✕ Request Rejected</span>`;
+        trackAction = `
+          <button class="btn btn-outline btn-sm" onclick="viewDigitalBatchPassport(${r.medicine_id}, null, '${r.batch_no || ''}', ${r.id})">
+            📜 Passport
+          </button>
+        `;
       } else {
         statusBadge = `<span class="badge badge-yellow">⏳ Awaiting Donor Action</span>`;
+        trackAction = `
+          <button class="btn btn-outline btn-sm" onclick="viewDigitalBatchPassport(${r.medicine_id}, null, '${r.batch_no || ''}', ${r.id})">
+            📜 Passport
+          </button>
+        `;
       }
 
       tr.innerHTML = `
-        <td>${urgencyBadge}</td>
+        <td>${urgencyBadge} ${dispatchBadge}</td>
         <td><strong>${r.medicine_name}</strong> (${r.medicine_unit})</td>
         <td><strong>🏥 ${r.donor_name}</strong></td>
         <td><span class="badge badge-outline font-weight-bold" style="font-size:0.85rem;">${r.quantity}</span></td>

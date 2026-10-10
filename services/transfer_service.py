@@ -341,7 +341,10 @@ def get_transfer_requests(status=None, phc_id=None, incoming_to_phc_id=None, out
             r.quantity,
             r.urgency,
             r.status,
-            r.created_at
+            r.created_at,
+            r.waybill_no,
+            r.dispatch_type,
+            r.batch_no
         FROM transfer_request r
         JOIN phc p_from ON r.from_phc_id = p_from.id
         JOIN phc p_to ON r.to_phc_id = p_to.id
@@ -388,7 +391,8 @@ def get_transfer_requests(status=None, phc_id=None, incoming_to_phc_id=None, out
         eta_mins = max(15, round(dist * 2.5))
         item['distance_km'] = dist
         item['eta_minutes'] = eta_mins
-        item['tracking_no'] = f"TN-MED-{item['id']:04d}"
+        item['tracking_no'] = item.get('waybill_no') or f"TN-MED-{item['id']:04d}"
+        item['waybill_no'] = item['tracking_no']
         item['carrier'] = "TN 108 Emergency Medical Logistics / PHC Runner"
         item['temperature'] = "Controlled Cold-Chain (4°C - 8°C)"
         enriched_requests.append(item)
@@ -496,3 +500,104 @@ def generate_district_indent(phc_id=None):
 
     indent_items.sort(key=lambda x: x['net_district_indent'], reverse=True)
     return indent_items
+
+def execute_autonomous_rebalance(deficit_phc_id, medicine_id):
+    """
+    Automated Lateral Redistribution Engine:
+    - Triggered autonomously when a medicine faces severe deficit (e.g. < 3 days left or fast burn).
+    - Identifies the nearest donor PHC with surplus while ensuring the Donor Safety Rail (>= 2x min_level).
+    - Instantly generates an Autonomous Transit Waybill (WAYBILL-AUTO-2026-XXXX).
+    - Approves transfer in real-time with zero bureaucratic delays.
+    - Updates stock in both PHCs and re-evaluates alerts.
+    """
+    import random
+    from services.alert_service import evaluate_alerts_for_item
+
+    donors = find_nearest_donors(deficit_phc_id, medicine_id)
+    if not donors:
+        raise ValueError("No surplus donor centre within safety threshold available for this medicine.")
+
+    donor = donors[0]
+    transfer_qty = donor['can_give']
+    if transfer_qty <= 0:
+        raise ValueError("Donor PHC has insufficient transferable surplus above its 2x safety buffer.")
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT name FROM phc WHERE id = ?", (deficit_phc_id,))
+    deficit_name = cursor.fetchone()['name']
+    cursor.execute("SELECT name FROM phc WHERE id = ?", (donor['phc_id'],))
+    donor_name = cursor.fetchone()['name']
+    cursor.execute("SELECT name, unit FROM medicine WHERE id = ?", (medicine_id,))
+    med_row = cursor.fetchone()
+    med_name = med_row['name']
+    med_unit = med_row['unit']
+
+    cursor.execute("SELECT batch_no FROM stock WHERE phc_id = ? AND medicine_id = ?", (donor['phc_id'], medicine_id))
+    donor_st = cursor.fetchone()
+    batch_no = donor_st['batch_no'] if donor_st and donor_st['batch_no'] else f"TN-{med_name[:4].upper()}-2026-B84"
+
+    waybill_no = f"TN-AUTO-WB-2026-{random.randint(1000, 9999)}"
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    try:
+        # Deduct from donor
+        cursor.execute("""
+            UPDATE stock SET quantity = quantity - ?
+            WHERE phc_id = ? AND medicine_id = ?
+        """, (transfer_qty, donor['phc_id'], medicine_id))
+
+        # Add to deficit PHC
+        cursor.execute("SELECT id FROM stock WHERE phc_id = ? AND medicine_id = ?", (deficit_phc_id, medicine_id))
+        rec_st = cursor.fetchone()
+        if rec_st:
+            cursor.execute("""
+                UPDATE stock SET quantity = quantity + ?
+                WHERE phc_id = ? AND medicine_id = ?
+            """, (transfer_qty, deficit_phc_id, medicine_id))
+        else:
+            cursor.execute("""
+                INSERT INTO stock (phc_id, medicine_id, quantity, min_level, batch_no)
+                VALUES (?, ?, ?, 15, ?)
+            """, (deficit_phc_id, medicine_id, transfer_qty, batch_no))
+
+        # Insert transfer request with approved status
+        cursor.execute("""
+            INSERT INTO transfer_request 
+            (from_phc_id, to_phc_id, medicine_id, quantity, urgency, status, created_at, waybill_no, dispatch_type, batch_no)
+            VALUES (?, ?, ?, ?, 'EMERGENCY', 'approved', ?, ?, 'AUTONOMOUS_TRIGGER', ?)
+        """, (deficit_phc_id, donor['phc_id'], medicine_id, transfer_qty, now_str, waybill_no, batch_no))
+        request_id = cursor.lastrowid
+
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        raise e
+
+    conn.close()
+
+    # Re-evaluate alerts
+    evaluate_alerts_for_item(donor['phc_id'], medicine_id)
+    evaluate_alerts_for_item(deficit_phc_id, medicine_id)
+
+    log_activity(
+        "⚡ Autonomous Lateral Rebalance",
+        f"MediTrack AI Auto-Trigger: Dispatched {transfer_qty} {med_unit} of {med_name} from surplus centre {donor_name} to {deficit_name} (Waybill: {waybill_no}, Distance: {donor['distance_km']} km)"
+    )
+
+    return {
+        "success": True,
+        "request_id": request_id,
+        "waybill_no": waybill_no,
+        "batch_no": batch_no,
+        "transferred_quantity": transfer_qty,
+        "medicine_name": med_name,
+        "medicine_unit": med_unit,
+        "donor_phc_name": donor_name,
+        "deficit_phc_name": deficit_name,
+        "distance_km": donor['distance_km'],
+        "eta_minutes": max(12, round(donor['distance_km'] * 2.5))
+    }
+

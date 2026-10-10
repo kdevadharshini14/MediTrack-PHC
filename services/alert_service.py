@@ -218,6 +218,32 @@ def get_alerts(status='active', phc_id=None):
             alert_dict['suggested_donors'] = []
             alert_dict['top_donor'] = None
 
+        # Synthesize exactly 1 plain sentence explanation for the pharmacist
+        qty_val = alert_dict['current_quantity'] or 0
+        min_val = alert_dict['min_level'] or 10
+        unit_val = alert_dict['medicine_unit'] or "units"
+        med_val = alert_dict['medicine_name']
+        donor_txt = alert_dict['top_donor']['phc_name'] if alert_dict['top_donor'] else "neighbouring health centres"
+        donor_txt_ta = alert_dict['top_donor']['phc_name'] if alert_dict['top_donor'] else "அருகிலுள்ள ஆரம்ப சுகாதார நிலையங்கள்"
+
+        if alert_dict['level'] == 'CRITICAL':
+            if alert_dict['reason'] == 'FAST_BURN':
+                plain_en = f"At your current rapid outpatient surge of {burn['avg_daily_usage']} {unit_val}/day, your remaining {qty_val} {unit_val} of {med_val} will be completely exhausted in {burn['days_left_display']} days; request emergency lateral stock from nearby {donor_txt} immediately."
+                plain_ta = f"தற்போதைய தீவிர நோயாளிகள் வருகை வேகத்தில் ({burn['avg_daily_usage']} {unit_val}/நாள்), உங்களிடம் உள்ள {qty_val} {unit_val} {med_val} இன்னும் {burn['days_left_display']} நாட்களில் முற்றிலும் தீர்ந்துவிடும்; உடனே {donor_txt_ta}-யிடம் அவசர மருந்து கோரவும்."
+            else:
+                plain_en = f"Your physical stock of {med_val} has dropped critically to {qty_val} {unit_val} (below your minimum safe buffer of {min_val}); request lateral replenishment before the next clinic shift to avoid turning patients away."
+                plain_ta = f"உங்களிடம் உள்ள {med_val} இருப்பு {qty_val} {unit_val} ஆக குறைந்துவிட்டது (குறைந்தபட்ச பாதுகாப்பு அளவு {min_val}); நோயாளிகள் ஏமாறாமல் இருக்க அடுத்த ஷிப்ட்டுக்குள் ஸ்டாக் ஏற்றவும்."
+        else: # WARNING
+            if alert_dict['reason'] == 'FAST_BURN':
+                plain_en = f"{med_val} dispensing is accelerating {burn['trend_pct']} faster with only {burn['days_left_display']} days of supply remaining; keep nearby sister centres on alert for lateral rebalancing."
+                plain_ta = f"{med_val} மருந்து வழக்கத்தை விட {burn['trend_pct']} வேகமாக செலவாகிறது ({burn['days_left_display']} நாட்களுக்கு மட்டுமே இருப்பு உள்ளது); மறுபகிர்வுக்கு பக்கத்து மையங்களை தயார் நிலையில் வைக்கவும்."
+            else:
+                plain_en = f"Your buffer stock of {med_val} is at {qty_val} {unit_val} (approaching the warning threshold); monitor daily dispensing closely and prepare an indent."
+                plain_ta = f"{med_val} இருப்பு {qty_val} {unit_val} ஆக உள்ளது (எச்சரிக்கை நிலையை நெருங்குகிறது); தினசரி விநியோகத்தை கண்காணித்து கோரிக்கை தயார் செய்யவும்."
+
+        alert_dict['plain_explanation'] = plain_en
+        alert_dict['plain_explanation_ta'] = plain_ta
+
         results.append(alert_dict)
 
     return results

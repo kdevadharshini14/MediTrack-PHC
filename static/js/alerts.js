@@ -106,36 +106,53 @@ function renderAlerts(alerts) {
       }
     }
 
-    card.innerHTML = `
-      <div class="alert-header">
-        <div>
-          <div class="alert-title-row">
-            ${levelBadge}
-            ${reasonBadge}
-            <h4 class="alert-title">${a.medicine_name}</h4>
-          </div>
-          <div class="alert-meta" style="margin-top:0.35rem;">
-            ${a.message} • Triggered: ${a.created_at}
+      const isTamil = (typeof currentLang !== "undefined" && currentLang === "ta");
+      const plainSentence = isTamil && a.plain_explanation_ta ? a.plain_explanation_ta : (a.plain_explanation || a.message);
+
+      const plainGuideBox = `
+        <div class="pharmacist-plain-sentence-box">
+          <span style="font-size:1.25rem; line-height:1;">🧑‍⚕️</span>
+          <div>
+            <strong style="display:block; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px; opacity:0.85;">
+              Pharmacist 1-Sentence Action Guide:
+            </strong>
+            <span>${plainSentence}</span>
           </div>
         </div>
-        <div>
-          <span class="badge badge-outline">${a.medicine_category}</span>
+      `;
+
+      card.innerHTML = `
+        <div class="alert-header">
+          <div>
+            <div class="alert-title-row">
+              ${levelBadge}
+              ${reasonBadge}
+              <h4 class="alert-title">${a.medicine_name}</h4>
+            </div>
+            <div class="alert-meta" style="margin-top:0.35rem;">
+              ${a.message} • Triggered: ${a.created_at}
+            </div>
+          </div>
+          <div>
+            <span class="badge badge-outline">${a.medicine_category}</span>
+          </div>
         </div>
-      </div>
 
-      <div class="alert-body-stats">
-        <span><strong>Current Stock:</strong> ${a.current_quantity || 0} ${a.medicine_unit}</span>
-        <span><strong>Min Safe Level:</strong> ${a.min_level}</span>
-        <span><strong>Days Left:</strong> <strong style="color:${a.days_left < 3 ? 'var(--danger)' : 'var(--warning-dark)'};">${a.days_left_display} days</strong></span>
-        <span><strong>Velocity:</strong> <span class="trend-badge ${trendClass}">${a.trend_symbol} ${a.trend_label} (${a.trend_pct})</span></span>
-      </div>
+        <div class="alert-body-stats">
+          <span><strong>Current Stock:</strong> ${a.current_quantity || 0} ${a.medicine_unit}</span>
+          <span><strong>Min Safe Level:</strong> ${a.min_level}</span>
+          <span><strong>Days Left:</strong> <strong style="color:${a.days_left < 3 ? 'var(--danger)' : 'var(--warning-dark)'};">${a.days_left_display} days</strong></span>
+          <span><strong>Velocity:</strong> <span class="trend-badge ${trendClass}">${a.trend_symbol} ${a.trend_label} (${a.trend_pct})</span></span>
+        </div>
 
-      ${donorSection}
-    `;
+        ${plainGuideBox}
 
-    container.appendChild(card);
-  });
-}
+        ${donorSection}
+      `;
+
+      container.appendChild(card);
+    });
+  }
 
 async function requestFromDonor(toPhcId, medId, qty, urgency) {
   try {

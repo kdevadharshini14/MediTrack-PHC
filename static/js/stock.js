@@ -127,6 +127,7 @@ function renderStockTable(stocks) {
         <div style="font-size:0.75rem; color:var(--slate-500);">${s.medicine_unit}</div>
       </td>
       <td><span class="badge badge-outline">${s.medicine_category}</span></td>
+      <td><span class="passport-crypto-badge" style="font-weight:700;">${s.batch_no}</span></td>
       <td>${qtyBadge}</td>
       <td>${s.min_level}</td>
       <td>${s.avg_daily_usage} / day</td>
@@ -134,9 +135,14 @@ function renderStockTable(stocks) {
       <td>${trendHtml}</td>
       <td>${expiryHtml}</td>
       <td>
-        <button class="btn btn-outline btn-sm" onclick="openUpdateModal(${s.stock_id})">
-          Edit
-        </button>
+        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="viewDigitalBatchPassport(${s.medicine_id}, ${s.phc_id}, '${s.batch_no}')" title="Inspect Digital Batch Passport">
+            📜 Passport
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="openUpdateModal(${s.stock_id})">
+            Edit
+          </button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);

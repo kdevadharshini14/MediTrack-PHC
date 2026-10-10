@@ -27,7 +27,8 @@ from services.transfer_service import (
     reject_transfer_request,
     get_transfer_requests,
     get_block_rebalance_overview,
-    generate_district_indent
+    generate_district_indent,
+    execute_autonomous_rebalance
 )
 from services.forecast_service import (
     get_medicine_forecast,
@@ -37,6 +38,11 @@ from services.epidemic_service import (
     detect_epidemic_outbreaks,
     citizen_check_stock
 )
+from services.expiry_rescue_service import (
+    get_near_expiry_rescue_candidates,
+    execute_rescue_swap
+)
+from services.passport_service import get_digital_batch_passport
 
 load_dotenv()
 
@@ -498,6 +504,46 @@ def api_record_usage():
     except Exception as e:
         return jsonify({"success": False, "error": f"Server error: {str(e)}"}), 500
 
+@app.route("/api/sync/batch", methods=["POST"])
+@login_required
+def api_sync_batch():
+    """
+    Offline-First Sync Endpoint:
+    Accepts queued offline dispensing sessions captured during internet outages.
+    Saves and updates inventory atomically with full audit trail.
+    """
+    current_phc_id = session['phc_id']
+    data = request.get_json() or {}
+    sessions_list = data.get("sessions", [])
+
+    if not sessions_list:
+        return jsonify({"success": True, "synced_count": 0, "message": "No offline sessions to sync."})
+
+    synced_count = 0
+    errors = []
+
+    for sess in sessions_list:
+        u_date = sess.get("date", date.today().isoformat())
+        u_items = sess.get("items", [])
+        if u_items:
+            try:
+                record_usage(current_phc_id, u_date, u_items)
+                synced_count += 1
+            except Exception as e:
+                errors.append(f"Date {u_date}: {str(e)}")
+
+    log_activity(
+        "Offline Outbox Synced",
+        f"Synchronized {synced_count} offline dispensing batches recorded during network outage at {session.get('phc_name')}"
+    )
+
+    return jsonify({
+        "success": True,
+        "synced_count": synced_count,
+        "errors": errors,
+        "message": f"Successfully synchronized {synced_count} offline dispensing batches with server!"
+    })
+
 @app.route("/api/alerts", methods=["GET"])
 @login_required
 def api_alerts():
@@ -704,6 +750,125 @@ def api_activity():
     logs = [dict(r) for r in cursor.fetchall()]
     conn.close()
     return jsonify({"success": True, "data": logs})
+
+# ==========================================
+# NEAR-EXPIRY RESCUE SWAP & AUTONOMOUS REBALANCE
+# ==========================================
+
+@app.route("/api/expiry_rescue", methods=["GET"])
+@login_required
+def api_expiry_rescue():
+    """
+    Fetch near-expiry rescue candidates.
+    Identifies medicines with impending expiry where local burn rate will cause stock wastage,
+    and pairs them with high-burn sister PHCs.
+    """
+    current_phc_id = session.get('phc_id')
+    try:
+        candidates = get_near_expiry_rescue_candidates(current_phc_id=current_phc_id)
+        return jsonify({"success": True, "data": candidates})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/expiry_rescue/swap", methods=["POST"])
+@login_required
+def api_execute_rescue_swap():
+    """
+    Execute Near-Expiry Smart Rescue Swap:
+    Transfers at-risk stock from source to high-consumption hospital before expiration.
+    """
+    data = request.get_json() or {}
+    source_phc_id = data.get("source_phc_id")
+    target_phc_id = data.get("target_phc_id")
+    medicine_id = data.get("medicine_id")
+    quantity = data.get("quantity")
+
+    if not all([source_phc_id, target_phc_id, medicine_id, quantity]):
+        return jsonify({"success": False, "error": "Missing required swap parameters."}), 400
+
+    try:
+        result = execute_rescue_swap(
+            int(source_phc_id),
+            int(target_phc_id),
+            int(medicine_id),
+            int(quantity)
+        )
+        return jsonify({"success": True, "data": result, "message": "Smart Expiry Rescue Swap executed successfully!"})
+    except ValueError as ve:
+        return jsonify({"success": False, "error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/auto_rebalance", methods=["POST"])
+@login_required
+def api_auto_rebalance():
+    """
+    Autonomous Lateral Rebalance:
+    Triggered when a PHC faces a critical stockout.
+    Automatically discovers nearest surplus donor satisfying safety buffer,
+    generates digital waybill, and dispatches stock with 0s administrative delay.
+    """
+    current_phc_id = session.get('phc_id')
+    data = request.get_json() or {}
+    med_id = data.get("medicine_id")
+
+    if not med_id:
+        return jsonify({"success": False, "error": "medicine_id is required."}), 400
+
+    try:
+        result = execute_autonomous_rebalance(deficit_phc_id=current_phc_id, medicine_id=int(med_id))
+        return jsonify({
+            "success": True, 
+            "data": result, 
+            "message": f"Autonomous Rebalance Executed! {result['transferred_quantity']} units dispatched via Waybill {result['waybill_no']}."
+        })
+    except ValueError as ve:
+        return jsonify({"success": False, "error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/batch_passport", methods=["GET"])
+@login_required
+def api_batch_passport():
+    """
+    Hospital Staff: Fetch Digital Batch Passport & Birth-to-Dispense Provenance.
+    Provides verified 6-stage lifecycle from manufacturing plant to dispensing counter.
+    """
+    med_id = request.args.get("medicine_id", type=int)
+    phc_id = request.args.get("phc_id", type=int) or session.get('phc_id')
+    batch_no = request.args.get("batch_no")
+    request_id = request.args.get("request_id", type=int)
+
+    try:
+        passport = get_digital_batch_passport(
+            medicine_id=med_id,
+            phc_id=phc_id,
+            batch_no=batch_no,
+            request_id=request_id
+        )
+        return jsonify({"success": True, "data": passport})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/public/batch_passport", methods=["GET"])
+def api_public_batch_passport():
+    """
+    Public / Citizen Verification:
+    Allows citizens to verify medicine origin, manufacturer lab certificate, and cold chain safety.
+    """
+    med_id = request.args.get("medicine_id", type=int)
+    med_name = request.args.get("medicine_name")
+    batch_no = request.args.get("batch_no")
+
+    try:
+        passport = get_digital_batch_passport(
+            medicine_id=med_id,
+            medicine_name=med_name,
+            batch_no=batch_no
+        )
+        return jsonify({"success": True, "data": passport})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # ==========================================
 # CSV EXPORT ENDPOINTS

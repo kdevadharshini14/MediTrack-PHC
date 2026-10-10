@@ -209,7 +209,8 @@ def get_stock(phc_id=None, medicine_id=None):
             m.category as medicine_category,
             s.quantity,
             s.min_level,
-            s.expiry_date
+            s.expiry_date,
+            s.batch_no
         FROM stock s
         JOIN phc p ON s.phc_id = p.id
         JOIN medicine m ON s.medicine_id = m.id
@@ -235,6 +236,8 @@ def get_stock(phc_id=None, medicine_id=None):
         qty_status = get_quantity_status(r['quantity'], r['min_level'])
         expiry_info = check_expiry_details(r['expiry_date'], r['medicine_id'], r['phc_id'])
 
+        batch_code = r['batch_no'] or f"TN-{r['medicine_name'][:4].upper()}-2026-B{r['medicine_id']:02d}"
+
         item = {
             "stock_id": r['stock_id'],
             "phc_id": r['phc_id'],
@@ -249,6 +252,7 @@ def get_stock(phc_id=None, medicine_id=None):
             "quantity": r['quantity'],
             "min_level": r['min_level'],
             "expiry_date": r['expiry_date'],
+            "batch_no": batch_code,
             "qty_status": qty_status,
             **burn,
             **expiry_info

@@ -19,6 +19,30 @@
   </div>
 </div>
 
+<!-- OFFLINE OUTBOX SYNC BANNER -->
+<div id="offlineOutboxCard" class="card mb-4" style="display: none; border-left: 5px solid #f59e0b; background: #fffbeb; border-color: #fde68a;">
+  <div class="card-body p-3">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <span style="font-size:1.75rem;">📡</span>
+        <div>
+          <strong style="color:#92400e; font-size:1rem;" id="offlineStatusTitle">
+            Offline Mode • Outbox Active
+          </strong>
+          <p style="margin:2px 0 0 0; font-size:0.85rem; color:#b45309;" id="offlineStatusDesc">
+            Unreliable connectivity detected. Entries are safely stored on device and will sync automatically when network returns.
+          </p>
+        </div>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <button type="button" class="btn btn-warning btn-sm" id="btnManualSync" onclick="manualSyncOfflineOutbox()" style="background:#d97706; color:white; font-weight:700;">
+          ⚡ Sync Now
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="card">
   <div class="card-header">
     <h2 class="card-title">Dispensing Session</h2>
