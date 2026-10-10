@@ -40,6 +40,20 @@ python app.py
 
 Open your browser at: **[http://127.0.0.1:5000](http://127.0.0.1:5000)**
 
+### 3. Pre-Seeded Hospital Credentials (Default password: `phc123`)
+
+| Health Centre (PHC) | Username | Password | Role / Scenario in Demo |
+| :--- | :--- | :--- | :--- |
+| **Pallipalayam PHC** | `pallipalayam` | `phc123` | Active Centre (Surplus Donor) |
+| **Komarapalayam PHC** | `komarapalayam` | `phc123` | Shortage Centre (Outbreak & Burn Spike) |
+| **Tiruchengode PHC** | `tiruchengode` | `phc123` | Surplus Donor (8.4 km away) |
+| **Namakkal Town PHC** | `namakkal` | `phc123` | High Outpatient Volume |
+| **Rasipuram PHC** | `rasipuram` | `phc123` | ORS Shortage Centre |
+| **Paramathi Velur PHC** | `pvelur` | `phc123` | Surplus Metformin |
+
+> 💡 **New Hospital Registration:** Any new health centre can self-register anytime via the **[Register New Hospital](/register)** page!
+> 💡 **Add Brand New Medicines:** Add custom drugs, vaccines, or syrups to the Master Catalog on the fly via **`+ Register Brand New Medicine`** on the Stock page!
+
 *Note: Database schema and Namakkal District seed data are automatically initialized on the first run!*
 
 ---
