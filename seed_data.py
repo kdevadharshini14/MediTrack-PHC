@@ -189,10 +189,16 @@ def seed_database(force=False):
         VALUES (?, ?, ?, ?, ?)
     """, stock_entries)
 
+    # 5. Pre-seed default citizen user account (for mother/citizen demo)
+    cursor.execute("""
+        INSERT OR IGNORE INTO citizen (id, full_name, phone, password, location, created_at)
+        VALUES (1, 'Anjali (Mother / தாய்)', '9876543210', 'citizen123', 'Pallipalayam Village, Namakkal', ?)
+    """, (today.isoformat(),))
+
     conn.commit()
     conn.close()
 
-    log_activity("System Initialized", "Database seeded with Namakkal district PHC logins, medicines, and initial baseline.")
+    log_activity("System Initialized", "Database seeded with Namakkal district PHC logins, medicines, citizen accounts, and baseline.")
     evaluate_all_alerts()
 
     return True

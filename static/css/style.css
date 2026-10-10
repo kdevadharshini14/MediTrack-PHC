@@ -872,3 +872,132 @@ body {
   .main-content { padding: 1rem; }
   .rebalance-pair-row { grid-template-columns: 1fr; gap: 0.5rem; }
 }
+
+/* LIVE TRANSIT TRACKER MODAL */
+.transit-tracker-header {
+  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%);
+  color: white;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.transit-route-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.transit-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  margin: 1.75rem 0 1.25rem 0;
+}
+
+.transit-step-line {
+  position: absolute;
+  top: 18px;
+  left: 10%;
+  right: 10%;
+  height: 4px;
+  background: var(--slate-200);
+  z-index: 1;
+}
+
+.transit-step-line-active {
+  position: absolute;
+  top: 18px;
+  left: 10%;
+  width: 65%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary) 0%, #10b981 100%);
+  z-index: 2;
+  transition: width 0.5s ease;
+}
+
+.transit-step-item {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.transit-step-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: white;
+  border: 3px solid var(--slate-300);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--slate-500);
+  margin-bottom: 0.35rem;
+  transition: all 0.3s ease;
+}
+
+.transit-step-item.completed .transit-step-circle {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.transit-step-item.active .transit-step-circle {
+  background: #10b981;
+  border-color: #047857;
+  color: white;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+  animation: pulseVehicle 1.5s infinite;
+}
+
+.transit-step-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--slate-600);
+}
+
+.transit-info-card {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  background: var(--slate-50);
+  border: 1px solid var(--slate-200);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.transit-info-item h5 {
+  font-size: 0.75rem;
+  color: var(--slate-500);
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.transit-info-item p {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--slate-800);
+  margin: 0;
+}
+
+@keyframes pulseVehicle {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}

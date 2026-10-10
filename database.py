@@ -96,12 +96,22 @@ def init_db():
         timestamp TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS citizen (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        full_name TEXT NOT NULL,
+        phone TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL DEFAULT 'citizen123',
+        location TEXT,
+        created_at TEXT NOT NULL
+    );
+
     -- Indexes for performance
     CREATE INDEX IF NOT EXISTS idx_phc_username ON phc(username);
     CREATE INDEX IF NOT EXISTS idx_stock_phc_med ON stock(phc_id, medicine_id);
     CREATE INDEX IF NOT EXISTS idx_usage_date ON usage_log(date, phc_id, medicine_id);
     CREATE INDEX IF NOT EXISTS idx_alert_status ON alert(status, phc_id, medicine_id);
     CREATE INDEX IF NOT EXISTS idx_transfer_status ON transfer_request(status);
+    CREATE INDEX IF NOT EXISTS idx_citizen_phone ON citizen(phone);
     """)
 
     conn.commit()

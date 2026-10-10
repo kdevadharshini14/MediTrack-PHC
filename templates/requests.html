@@ -78,11 +78,12 @@
             <th>Quantity Requested</th>
             <th>Status</th>
             <th>Requested Date</th>
+            <th>Live Tracking</th>
           </tr>
         </thead>
         <tbody id="outgoingRequestsBody">
           <tr>
-            <td colspan="6" class="text-center p-4 text-muted">Loading outgoing requests...</td>
+            <td colspan="7" class="text-center p-4 text-muted">Loading outgoing requests...</td>
           </tr>
         </tbody>
       </table>
@@ -125,6 +126,105 @@
           </tr>
         </tbody>
       </table>
+    </div>
+  </div>
+<!-- LIVE TRANSIT TRACKING MODAL -->
+<div class="modal-backdrop" id="transitTrackerModal">
+  <div class="modal-dialog" style="max-width: 650px;">
+    <div class="transit-tracker-header">
+      <div>
+        <h3 style="margin:0; font-size:1.15rem; display:flex; align-items:center; gap:0.5rem;">
+          🚑 Live Medicine Transit Tracking
+        </h3>
+        <p style="margin:4px 0 0 0; font-size:0.8rem; opacity:0.85;" id="trackConsignmentId">
+          Consignment: TN-MED-0001 • Priority: EMERGENCY
+        </p>
+      </div>
+      <button class="modal-close" style="color:white; font-size:1.5rem;" onclick="closeModal('transitTrackerModal')">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Route Box -->
+      <div class="transit-route-box">
+        <div>
+          <div style="font-size:0.75rem; color:var(--slate-500); font-weight:700;">DONOR ORIGIN</div>
+          <strong id="trackDonorName" style="color:var(--slate-800); font-size:1rem;">Tiruchengode PHC</strong>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:center;">
+          <span style="font-size:1.25rem;">➔</span>
+          <span class="badge badge-outline" id="trackDistanceBadge" style="font-size:0.75rem;">8.4 km</span>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.75rem; color:var(--slate-500); font-weight:700;">REQUESTER DESTINATION</div>
+          <strong id="trackRequesterName" style="color:var(--slate-800); font-size:1rem;">Pallipalayam PHC</strong>
+        </div>
+      </div>
+
+      <!-- Real-Time Delivery Stepper -->
+      <div class="transit-stepper">
+        <div class="transit-step-line"></div>
+        <div class="transit-step-line-active" id="trackStepLine"></div>
+
+        <div class="transit-step-item completed">
+          <div class="transit-step-circle">✓</div>
+          <div class="transit-step-label">Requested</div>
+        </div>
+
+        <div class="transit-step-item completed">
+          <div class="transit-step-circle">✓</div>
+          <div class="transit-step-label">Approved & Packed</div>
+        </div>
+
+        <div class="transit-step-item active" id="stepTransit">
+          <div class="transit-step-circle">🚑</div>
+          <div class="transit-step-label">In Transit (On Route)</div>
+        </div>
+
+        <div class="transit-step-item" id="stepDelivered">
+          <div class="transit-step-circle" id="circleDelivered">📦</div>
+          <div class="transit-step-label">Received at PHC</div>
+        </div>
+      </div>
+
+      <!-- Live Logistics Details Grid -->
+      <div class="transit-info-card">
+        <div class="transit-info-item">
+          <h5>Medicine & Quantity</h5>
+          <p id="trackMedicineQty">340 units</p>
+        </div>
+        <div class="transit-info-item">
+          <h5>Estimated Arrival (ETA)</h5>
+          <p id="trackEta" style="color:var(--primary);">~21 Minutes</p>
+        </div>
+        <div class="transit-info-item">
+          <h5>Carrier Mode</h5>
+          <p id="trackCarrier" style="font-size:0.85rem;">TN 108 Medical Van / Runner</p>
+        </div>
+        <div class="transit-info-item">
+          <h5>Cold-Chain Integrity</h5>
+          <p id="trackColdChain" style="color:var(--success); font-size:0.85rem;">✓ 4°C - 8°C Monitored</p>
+        </div>
+      </div>
+
+      <!-- Live Transit Status Notice -->
+      <div class="p-3" id="trackNoticeBox" style="background:#ecfdf5; border:1px solid #a7f3d0; border-radius:var(--radius-sm); font-size:0.85rem; color:#065f46; display:flex; align-items:center; gap:0.75rem;">
+        <span style="font-size:1.5rem;">📍</span>
+        <div>
+          <strong>Live Vehicle Tracking Active:</strong> Emergency stock has departed donor pharmacy and is currently en route. Expected at your dispensing counter shortly.
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+      <button type="button" class="btn btn-outline btn-sm" onclick="alert('📞 Dispatch Runner Driver: +91 94432 10800\nVehicle: TN-28-G-1082\nRoute: SH-86 Highway')">
+        📞 Contact Runner (+91 94432 10800)
+      </button>
+      <div style="display:flex; gap:0.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('transitTrackerModal')">Close</button>
+        <button type="button" class="btn btn-success" id="btnMarkReceived" onclick="confirmDeliveryReceipt()">
+          ✓ Mark as Received & Verified
+        </button>
+      </div>
     </div>
   </div>
 </div>

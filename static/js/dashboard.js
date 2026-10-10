@@ -13,6 +13,7 @@ async function loadDashboardData() {
     await Promise.all([
       loadMetricCounts(),
       loadCriticalAlertBanner(),
+      loadEpidemicRadar(),
       loadIncomingRequests(),
       loadMyStockSnapshot()
     ]);
@@ -67,6 +68,29 @@ async function loadCriticalAlertBanner() {
     }
   } catch (err) {
     console.error("Error loading alert banner:", err);
+  }
+}
+
+async function loadEpidemicRadar() {
+  try {
+    const res = await fetch("/api/epidemic_radar");
+    const json = await res.json();
+    const card = document.getElementById("epidemicRadarCard");
+    if (!card) return;
+
+    if (json.success && json.data && json.data.length > 0) {
+      const topCluster = json.data[0];
+      document.getElementById("radarDiseaseTitle").textContent = topCluster.disease_name;
+      document.getElementById("radarSeverityBadge").textContent = topCluster.severity_label;
+      document.getElementById("radarDescription").textContent = 
+        `Simultaneous rapid consumption surge detected for ${topCluster.medicine_name} across ${topCluster.affected_count} health centres in Namakkal Block.`;
+      document.getElementById("radarAdvisory").textContent = topCluster.advisory;
+      card.style.display = "block";
+    } else {
+      card.style.display = "none";
+    }
+  } catch (err) {
+    console.error("Error loading epidemic radar:", err);
   }
 }
 

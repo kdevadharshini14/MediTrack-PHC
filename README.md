@@ -40,7 +40,9 @@ python app.py
 
 Open your browser at: **[http://127.0.0.1:5000](http://127.0.0.1:5000)**
 
-### 3. Pre-Seeded Hospital Credentials (Default password: `phc123`)
+### 3. Pre-Seeded Authentication Credentials
+
+#### 🏥 A. Hospital Staff Logins (`/login` - Default Password: `phc123`)
 
 | Health Centre (PHC) | Username | Password | Role / Scenario in Demo |
 | :--- | :--- | :--- | :--- |
@@ -51,8 +53,16 @@ Open your browser at: **[http://127.0.0.1:5000](http://127.0.0.1:5000)**
 | **Rasipuram PHC** | `rasipuram` | `phc123` | ORS Shortage Centre |
 | **Paramathi Velur PHC** | `pvelur` | `phc123` | Surplus Metformin |
 
-> 💡 **New Hospital Registration:** Any new health centre can self-register anytime via the **[Register New Hospital](/register)** page!
-> 💡 **Add Brand New Medicines:** Add custom drugs, vaccines, or syrups to the Master Catalog on the fly via **`+ Register Brand New Medicine`** on the Stock page!
+#### 👨‍👩‍👧 B. Public / Citizen Logins (`/citizen/login` - Dedicated Mother Portal)
+
+| Citizen / Patient Role | Mobile / Phone | Password | Access & Features |
+| :--- | :--- | :--- | :--- |
+| **Mother (Anjali)** | `9876543210` | `citizen123` | Live stock checker across block, alternative PHC discovery |
+| **New Citizen Signup** | Custom Mobile | Custom Pass | Self-service registration via **[/citizen/register](/citizen/register)** |
+
+> 💡 **Portal Switching:** Seamless toggle tabs on both login pages let you easily switch between **🏥 Hospital Staff** and **👨‍👩‍👧 Public / Citizen** workspaces!
+> 💡 **New Hospital Registration:** Health centres can self-register anytime via **[/register](/register)**!
+> 🌡️ **Block Epidemic Surveillance Radar:** Real-time outbreak detector linking medicine burn velocity spikes to infectious disease clusters (Dengue, Viral Fever, Diarrhea).
 
 *Note: Database schema and Namakkal District seed data are automatically initialized on the first run!*
 

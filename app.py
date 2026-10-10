@@ -33,6 +33,10 @@ from services.forecast_service import (
     get_medicine_forecast,
     get_consumption_analytics
 )
+from services.epidemic_service import (
+    detect_epidemic_outbreaks,
+    citizen_check_stock
+)
 
 load_dotenv()
 
@@ -216,9 +220,133 @@ def alerts_page():
 def activity_page():
     return render_template("activity.html")
 
+def citizen_login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'citizen_id' not in session:
+            return redirect(url_for('citizen_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
 # ==========================================
-# API ENDPOINTS (SCOPED TO ACTIVE HOSPITAL)
+# PUBLIC & CITIZEN AUTHENTICATION PORTAL
 # ==========================================
+
+@app.route("/citizen/login", methods=["GET", "POST"])
+def citizen_login():
+    """Separate dedicated login portal for Citizens and Mothers."""
+    quick = request.args.get("quick")
+    if quick == "mother":
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, full_name, phone, location FROM citizen WHERE id = 1")
+        user = cursor.fetchone()
+        conn.close()
+        if user:
+            session['citizen_id'] = user['id']
+            session['citizen_name'] = user['full_name']
+            session['citizen_phone'] = user['phone']
+            session['citizen_location'] = user['location']
+            return redirect(url_for('citizen_page'))
+
+    if request.method == "POST":
+        phone = request.form.get("phone", "").strip()
+        password = request.form.get("password", "").strip()
+
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, full_name, phone, password, location FROM citizen WHERE phone = ?", (phone,))
+        user = cursor.fetchone()
+        conn.close()
+
+        if user and user['password'] == password:
+            session['citizen_id'] = user['id']
+            session['citizen_name'] = user['full_name']
+            session['citizen_phone'] = user['phone']
+            session['citizen_location'] = user['location']
+            return redirect(url_for('citizen_page'))
+        else:
+            return render_template("citizen_login.html", error="Invalid mobile number or password. Default demo is 9876543210 / citizen123")
+
+    return render_template("citizen_login.html")
+
+@app.route("/citizen/register", methods=["GET", "POST"])
+def citizen_register():
+    """Citizen self-registration."""
+    if request.method == "POST":
+        full_name = request.form.get("full_name", "").strip()
+        phone = request.form.get("phone", "").strip()
+        password = request.form.get("password", "").strip()
+        location = request.form.get("location", "").strip()
+
+        if not full_name or not phone or not password:
+            return render_template("citizen_register.html", error="Please fill in all required fields.")
+
+        conn = get_db()
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+                INSERT INTO citizen (full_name, phone, password, location, created_at)
+                VALUES (?, ?, ?, ?, ?)
+            """, (full_name, phone, password, location, date.today().isoformat()))
+            citizen_id = cursor.lastrowid
+            conn.commit()
+            conn.close()
+
+            session['citizen_id'] = citizen_id
+            session['citizen_name'] = full_name
+            session['citizen_phone'] = phone
+            session['citizen_location'] = location
+            return redirect(url_for('citizen_page'))
+        except Exception as e:
+            conn.close()
+            return render_template("citizen_register.html", error="Mobile number already registered or invalid input.")
+
+    return render_template("citizen_register.html")
+
+@app.route("/citizen/logout")
+def citizen_logout():
+    """Sign out citizen."""
+    session.pop('citizen_id', None)
+    session.pop('citizen_name', None)
+    session.pop('citizen_phone', None)
+    session.pop('citizen_location', None)
+    return redirect(url_for('citizen_login'))
+
+@app.route("/citizen")
+@app.route("/public")
+@citizen_login_required
+def citizen_page():
+    """Dedicated Citizen Stock Verification Portal - Protected by citizen login."""
+    return render_template("citizen.html")
+
+# ==========================================
+# PUBLIC & CITIZEN API ENDPOINTS
+# ==========================================
+
+@app.route("/api/epidemic_radar", methods=["GET"])
+def api_epidemic_radar():
+    """Detects multi-centre epidemic outbreak clusters based on medicine depletion velocities."""
+    try:
+        clusters = detect_epidemic_outbreaks()
+        return jsonify({"success": True, "data": clusters})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/citizen/check", methods=["GET"])
+def api_citizen_check():
+    """Public query of medicine availability for citizens and mothers."""
+    med_id = request.args.get("medicine_id", type=int)
+    phc_id = request.args.get("phc_id", type=int)
+
+    if not med_id:
+        return jsonify({"success": False, "error": "medicine_id is required."}), 400
+
+    try:
+        result = citizen_check_stock(med_id, phc_id)
+        return jsonify({"success": True, "data": result})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/current_phc", methods=["GET"])
 @login_required

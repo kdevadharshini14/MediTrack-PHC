@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Medicine Checker - MediTrack PHC</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .citizen-hero {
+      background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%);
+      color: white;
+      padding: 3rem 1.5rem;
+      border-radius: var(--radius-lg);
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-lg);
+      text-align: center;
+    }
+    .citizen-hero h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.02em;
+    }
+    .citizen-hero p {
+      font-size: 1.1rem;
+      max-width: 700px;
+      margin: 0 auto;
+      opacity: 0.95;
+      line-height: 1.6;
+    }
+    .search-box-card {
+      background: white;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-md);
+      padding: 2rem;
+      margin-top: -2rem;
+      margin-bottom: 2.5rem;
+      border: 1px solid var(--slate-200);
+    }
+    .result-phc-card {
+      background: white;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--slate-200);
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .result-phc-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--slate-100);
+      padding-bottom: 0.75rem;
+    }
+    .alt-centre-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      margin-top: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+  </style>
+</head>
+<body style="background:#f8fafc;">
+
+  <!-- PUBLIC NAV -->
+  <nav class="navbar" style="background:#0f172a;">
+    <a href="/citizen" class="brand-container">
+      <div class="brand-icon">⚕</div>
+      <div>
+        <span class="brand-title">MediTrack PHC</span>
+        <span class="brand-subtitle">Public Healthcare Network • Namakkal District</span>
+      </div>
+    </a>
+    <div style="display:flex; align-items:center; gap:0.75rem;">
+      <button class="lang-btn" id="langToggleBtn">தமிழ்</button>
+      {% if session.get('citizen_id') %}
+      <div style="display:flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.12); padding:0.35rem 0.75rem; border-radius:var(--radius-sm); border:1px solid rgba(255,255,255,0.2);">
+        <span style="font-size:0.85rem; font-weight:700; color:#a7f3d0;">
+          👩 {{ session.get('citizen_name') }}
+        </span>
+        <a href="/citizen/logout" title="Sign out" style="color:rgba(255,255,255,0.7); text-decoration:none; font-size:0.8rem; margin-left:4px; padding:2px 6px; background:rgba(239,68,68,0.3); border-radius:4px;">
+          Logout
+        </a>
+      </div>
+      {% else %}
+      <a href="/citizen/login" class="btn btn-primary btn-sm">
+        Sign In
+      </a>
+      {% endif %}
+      <a href="/login" class="btn btn-outline btn-sm" style="color:white; border-color:rgba(255,255,255,0.4);">
+        🏥 Hospital Login
+      </a>
+    </div>
+  </nav>
+
+  <main class="main-content" style="max-width: 1000px; margin: 0 auto; padding: 2rem 1rem;">
+    <!-- HERO -->
+    <div class="citizen-hero">
+      <div style="font-size:2.5rem; margin-bottom:0.5rem;">👨‍👩‍👧</div>
+      <h1>Citizen Medicine Availability Checker</h1>
+      <p>
+        <strong>No mother walks 6 km in vain.</strong> Check live stock availability of essential syrups, tablets, and vaccines at your local Primary Health Centre before visiting, and discover nearest sister centres.
+      </p>
+    </div>
+
+    <!-- SEARCH CARD -->
+    <div class="search-box-card">
+      <form id="citizenSearchForm">
+        <div style="display:grid; grid-template-columns: 1fr 1fr auto; gap: 1rem; align-items: end;">
+          <div class="form-group mb-0">
+            <label class="form-label font-weight-bold">Select Essential Medicine</label>
+            <select class="form-select" id="citizenMedicineSelect" required>
+              <option value="" disabled selected>Loading medicines list...</option>
+            </select>
+          </div>
+
+          <div class="form-group mb-0">
+            <label class="form-label font-weight-bold">Select Your Primary Health Centre (PHC)</label>
+            <select class="form-select" id="citizenPhcSelect">
+              <option value="">All Health Centres in Namakkal Block</option>
+            </select>
+          </div>
+
+          <div>
+            <button type="submit" class="btn btn-primary" style="padding:0.65rem 1.75rem;">
+              🔍 Check Stock
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- RESULTS CONTAINER -->
+    <div id="resultsSection">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+        <h3 style="margin:0; font-size:1.25rem;" id="resultsTitle">
+          Live Stock Status
+        </h3>
+        <span id="resultsSub" style="color:var(--slate-500); font-size:0.9rem;">Select a medicine above to check availability.</span>
+      </div>
+
+      <div id="resultsCardsList">
+        <!-- Injected via citizen.js -->
+        <div class="card p-5 text-center text-muted">
+          <div style="font-size:3rem; margin-bottom:1rem;">💊</div>
+          <h4>Verify Medicine Availability in Real Time</h4>
+          <p>Choose your required syrup, tablet, or vaccine above to view availability across Namakkal District PHCs.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer mt-5">
+    <div>
+      <strong>MediTrack PHC Public Health Grid</strong> • Department of Public Health &amp; Preventive Medicine, Tamil Nadu
+    </div>
+    <div>
+      Free citizen service • Eliminating medicine stockout turnaways
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/common.js') }}"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      await loadCitizenDropdowns();
+      document.getElementById("citizenSearchForm").addEventListener("submit", handleCitizenSearch);
+    });
+
+    async function loadCitizenDropdowns() {
+      try {
+        const [resMeds, resPhcs] = await Promise.all([
+          fetch("/api/medicines"),
+          fetch("/api/phcs")
+        ]);
+        const medsJson = await resMeds.json();
+        const phcsJson = await resPhcs.json();
+
+        if (medsJson.success) {
+          const medSelect = document.getElementById("citizenMedicineSelect");
+          medSelect.innerHTML = `<option value="" disabled selected>Select Medicine (e.g. Paracetamol, ORS)...</option>`;
+          medsJson.data.forEach(m => {
+            // Default to Paracetamol syrup if available
+            const selected = m.name.toLowerCase().includes("paracetamol") ? "selected" : "";
+            medSelect.innerHTML += `<option value="${m.id}" ${selected}>${m.name} (${m.unit}) - ${m.category}</option>`;
+          });
+        }
+
+        if (phcsJson.success) {
+          const phcSelect = document.getElementById("citizenPhcSelect");
+          phcsJson.data.forEach(p => {
+            phcSelect.innerHTML += `<option value="${p.id}">${p.name} (${p.location})</option>`;
+          });
+        }
+
+        // Auto trigger search if default selected
+        if (document.getElementById("citizenMedicineSelect").value) {
+          executeSearch();
+        }
+      } catch (err) {
+        console.error("Error loading dropdowns:", err);
+      }
+    }
+
+    async function handleCitizenSearch(e) {
+      e.preventDefault();
+      executeSearch();
+    }
+
+    async function executeSearch() {
+      const medId = document.getElementById("citizenMedicineSelect").value;
+      const phcId = document.getElementById("citizenPhcSelect").value;
+      if (!medId) return;
+
+      const container = document.getElementById("resultsCardsList");
+      container.innerHTML = `<div class="card p-4 text-center">Checking live inventory across centres...</div>`;
+
+      try {
+        let url = `/api/citizen/check?medicine_id=${medId}`;
+        if (phcId) url += `&phc_id=${phcId}`;
+
+        const res = await fetch(url);
+        const json = await res.json();
+
+        if (!json.success || !json.data) {
+          container.innerHTML = `<div class="card p-4 text-center text-danger">No data available for this medicine.</div>`;
+          return;
+        }
+
+        const data = json.data;
+        document.getElementById("resultsTitle").textContent = 
+          `Stock Availability for: ${data.medicine_name} (${data.medicine_unit})`;
+        document.getElementById("resultsSub").textContent = 
+          `Category: ${data.category} • Showing ${data.centres.length} centres`;
+
+        container.innerHTML = "";
+
+        data.centres.forEach(c => {
+          const card = document.createElement("div");
+          card.className = "result-phc-card";
+
+          let altHtml = "";
+          if (c.status !== "AVAILABLE" && c.alternatives && c.alternatives.length > 0) {
+            const topAlt = c.alternatives[0];
+            altHtml = `
+              <div class="alt-centre-box">
+                <span style="font-size:1.75rem;">🚑</span>
+                <div>
+                  <strong style="color:#1d4ed8;">Alternative Nearest Centre: ${topAlt.phc_name}</strong>
+                  <div style="font-size:0.85rem; color:#1e3a8a; margin-top:2px;">
+                    Located <strong>${topAlt.distance_km} km away</strong> • Surplus Stock Available: <strong>${topAlt.quantity} units</strong>
+                  </div>
+                  <div style="font-size:0.8rem; color:#2563eb; margin-top:4px;">
+                    ✓ Emergency lateral transfer can be dispatched within 2 hours.
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+
+          card.innerHTML = `
+            <div class="result-header">
+              <div>
+                <h4 style="margin:0; font-size:1.15rem; color:var(--slate-800);">
+                  🏥 ${c.phc_name}
+                </h4>
+                <div style="font-size:0.85rem; color:var(--slate-500); margin-top:3px;">
+                  📍 ${c.location}
+                </div>
+              </div>
+              <div>
+                <span class="badge ${c.status_class}" style="font-size:0.9rem; padding:0.4rem 0.85rem;">
+                  ${c.status_badge}
+                </span>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+              <div>
+                <span style="font-size:0.9rem; color:var(--slate-600);">Current Pharmacy Stock:</span>
+                <strong style="font-size:1.1rem; color:var(--slate-900); margin-left:0.35rem;">
+                  ${c.quantity} ${data.medicine_unit}
+                </strong>
+              </div>
+              <div style="font-size:0.85rem; color:var(--slate-500);">
+                ✉ Contact: ${c.contact_email || 'phc@tnhealth.gov.in'}
+              </div>
+            </div>
+
+            ${altHtml}
+          `;
+
+          container.appendChild(card);
+        });
+
+        if (typeof reapplyLanguageIfTamil === "function") {
+          reapplyLanguageIfTamil();
+        }
+      } catch (err) {
+        console.error("Error executing citizen search:", err);
+        container.innerHTML = `<div class="card p-4 text-center text-danger">Error querying availability.</div>`;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citizen Registration - MediTrack PHC</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    .login-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+      background: radial-gradient(circle at top right, #064e3b 0%, #0f172a 70%);
+    }
+    .login-card {
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 480px;
+      padding: 2.25rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div style="text-align:center; margin-bottom: 1.5rem;">
+        <div style="font-size:2.5rem; margin-bottom:0.35rem;">📝</div>
+        <h1 style="font-size:1.4rem; font-weight:800; color:var(--slate-900); letter-spacing:-0.02em;">
+          Register as Citizen / Mother
+        </h1>
+        <p style="font-size:0.85rem; color:var(--slate-500); margin-top:0.25rem;">
+          Create a free citizen account to check live medicine availability at Namakkal District PHCs.
+        </p>
+      </div>
+
+      {% if error %}
+      <div style="background:#fee2e2; border-left:4px solid var(--danger); padding:0.75rem 1rem; border-radius:var(--radius-sm); color:#991b1b; font-size:0.85rem; margin-bottom:1.25rem;">
+        {{ error }}
+      </div>
+      {% endif %}
+
+      <form method="POST" action="/citizen/register">
+        <div class="form-group">
+          <label class="form-label">Full Name / உங்கள் பெயர்</label>
+          <input type="text" name="full_name" class="form-control" placeholder="e.g. Meenakshi (Mother)" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mobile Number / மொபைல் எண்</label>
+          <input type="tel" name="phone" class="form-control" placeholder="e.g. 9443212345" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Village / Location / வசிக்கும் பகுதி</label>
+          <input type="text" name="location" class="form-control" placeholder="e.g. Komarapalayam Rural, Namakkal" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password / கடவுச்சொல்</label>
+          <input type="password" name="password" class="form-control" placeholder="Choose a secure password" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100" style="padding:0.75rem; font-size:0.95rem; font-weight:700;">
+          Complete Registration &amp; Sign In →
+        </button>
+
+        <div style="text-align:center; margin-top:1.25rem;">
+          <a href="/citizen/login" style="color:var(--primary); font-size:0.85rem; font-weight:600; text-decoration:none;">
+            Already have an account? Sign in here (உள்நுழைய)
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
