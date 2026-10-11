@@ -50,16 +50,6 @@ async function loadIncomingRequests() {
         statusBadge = `<span class="badge badge-yellow">⏳ Pending</span>`;
       }
 
-      let actions = "—";
-      if (r.status === "pending") {
-        actions = `
-          <div style="display:flex; gap:0.4rem;">
-            <button class="btn btn-success btn-sm" onclick="approveRequest(${r.id}, '${r.medicine_name}', ${r.quantity})">
-              Approve
-            </button>
-            <button class="btn btn-outline btn-sm text-danger" onclick="rejectRequest(${r.id})">
-              Reject
-            </button>
       let dispatchBadge = "";
       if (r.dispatch_type === "AUTONOMOUS_TRIGGER") {
         dispatchBadge = `<div style="margin-top:2px;"><span class="badge" style="background:#4338ca; color:white; font-size:0.7rem;">⚡ Autonomous Waybill</span></div>`;
@@ -67,6 +57,7 @@ async function loadIncomingRequests() {
         dispatchBadge = `<div style="margin-top:2px;"><span class="badge" style="background:#d97706; color:white; font-size:0.7rem;">💡 Smart Rescue Swap</span></div>`;
       }
 
+      let actions = "—";
       if (r.status === "pending") {
         actions = `
           <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
